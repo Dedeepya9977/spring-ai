@@ -1,0 +1,10 @@
+target/
+data/
+.env
+.idea/
+*.iml
+*.log
+*.pem
+*.key
+*.p12
+.DS_Store

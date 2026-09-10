@@ -1,0 +1,47 @@
+@base = http://127.0.0.1:8080/api
+@session = REPLACE_WITH_CREATED_SESSION_ID
+@run = REPLACE_WITH_CREATED_RUN_ID
+
+### Create a session; copy id into session above
+POST {{base}}/sessions
+Authorization: Basic developer local-only
+
+### Agent run; use a new key only for an intentionally new request
+POST {{base}}/sessions/{{session}}/runs
+Authorization: Basic developer local-only
+Idempotency-Key: example-request-001
+Content-Type: application/json
+
+{"message":"Please request an INR 100 credit for ORD-1001","mode":"AGENT"}
+
+### Read pending immutable arguments and current ledger receipts
+GET {{base}}/runs/{{run}}
+Authorization: Basic reviewer local-only
+
+### Approve only after reviewing the proposal
+POST {{base}}/runs/{{run}}/decision
+Authorization: Basic reviewer local-only
+Content-Type: application/json
+
+{"approve":true,"reason":"Reviewed the synthetic order delay and proposed amount"}
+
+### Deterministic workflow
+POST {{base}}/sessions/{{session}}/runs
+Authorization: Basic developer local-only
+Idempotency-Key: example-status-001
+Content-Type: application/json
+
+{"message":"Explain the order status","mode":"ORDER_STATUS","orderId":"ORD-1001"}
+
+### Actual SSE proxy; fragments are provisional
+POST {{base}}/sessions/{{session}}/runs/stream
+Authorization: Basic developer local-only
+Idempotency-Key: example-stream-001
+Content-Type: application/json
+Accept: text/event-stream
+
+{"message":"Find ORD-1001","mode":"AGENT"}
+
+### Cancel a run
+POST {{base}}/runs/{{run}}/cancel
+Authorization: Basic developer local-only

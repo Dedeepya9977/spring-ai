@@ -1,0 +1,67 @@
+spring:
+  application:
+    name: agent-foundations
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/agents}
+    username: ${DB_USERNAME:agents}
+    password: ${DB_PASSWORD}
+    hikari:
+      maximum-pool-size: 12
+      connection-timeout: 3000
+  jdbc:
+    template:
+      query-timeout: 5
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: true
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+server:
+  shutdown: graceful
+  max-http-request-header-size: 16KB
+  tomcat:
+    max-connections: 200
+    accept-count: 20
+    threads:
+      max: 32
+  error:
+    include-message: never
+    include-stacktrace: never
+security:
+  issuer: ${OIDC_ISSUER}
+  audience: ${OIDC_AUDIENCE:agent-foundations}
+agent:
+  provider: ${AI_PROVIDER:OPENAI}
+  model: ${OPENAI_MODEL:gpt-4.1-mini}
+  economy-model: ${OPENAI_ECONOMY_MODEL:gpt-4.1-mini}
+  max-steps: 6
+  max-output-tokens: 1200
+  max-context-bytes: 40000
+  max-run-tokens: 100000
+  run-timeout: 120s
+  provider-timeout: 30s
+  approval-ttl: 15m
+  concurrency: 4
+  max-run-cost-usd: 0.25
+  # Conservative configurable rate card; estimates are not billing statements.
+  input-usd-per-million: ${INPUT_USD_PER_MILLION:0.40}
+  cached-input-usd-per-million: ${CACHED_INPUT_USD_PER_MILLION:0.10}
+  output-usd-per-million: ${OUTPUT_USD_PER_MILLION:1.60}
+  retention: 7d
+  mcp:
+    enabled: ${MCP_ENABLED:false}
+    java-command: ${MCP_JAVA_COMMAND:java}
+    server-jar: ${MCP_SERVER_JAR:target/agent-foundations-1.0.0.jar}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  endpoint:
+    health:
+      show-details: never
+      probes:
+        enabled: true
+logging:
+  pattern:
+    level: '%5p [cid=%X{correlationId:-}]'

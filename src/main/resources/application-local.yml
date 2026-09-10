@@ -1,0 +1,11 @@
+spring:
+  datasource:
+    url: jdbc:h2:file:./data/agents;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE
+    username: sa
+    password: ''
+  flyway:
+    locations: classpath:db/migration,classpath:db/local
+server:
+  address: 127.0.0.1
+agent:
+  provider: ${AI_PROVIDER:STUB}
