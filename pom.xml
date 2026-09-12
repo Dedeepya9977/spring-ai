@@ -1,23 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
+
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
     <version>4.1.1</version>
     <relativePath/>
   </parent>
+
   <groupId>com.dedeepya</groupId>
   <artifactId>agent-foundations</artifactId>
   <version>1.0.0</version>
   <name>Agent Foundations — Automotive Support</name>
-  <description>Spring AI, OpenAI Java SDK, durable agent controls, MCP and approval-gated workflows.</description>
+  <description>Spring Boot AI agent learning project with provider-neutral application boundaries.</description>
+
   <properties>
-    <java.version>17</java.version>
+    <java.version>21</java.version>
     <spring-ai.version>2.0.1</spring-ai.version>
-    <openai.version>4.61.0</openai.version>
+    <openai.version>4.63.1</openai.version>
     <mcp.version>2.0.1</mcp.version>
   </properties>
+
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -29,6 +35,7 @@
       </dependency>
     </dependencies>
   </dependencyManagement>
+
   <dependencies>
     <dependency>
       <groupId>org.springframework.boot</groupId>
@@ -72,7 +79,6 @@
       <artifactId>h2</artifactId>
       <scope>runtime</scope>
     </dependency>
-    <!-- Explicit modules keep provider selection and retry limits application-owned. -->
     <dependency>
       <groupId>org.springframework.ai</groupId>
       <artifactId>spring-ai-openai</artifactId>
@@ -127,6 +133,7 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
+
   <build>
     <plugins>
       <plugin>
