@@ -8,19 +8,19 @@ The goal is to become able to explain and change this project yourself. You are 
 
 ## First answer: does this teach Spring AI?
 
-**It teaches many of the same concepts, but the application uses the official OpenAI SDK directly.**
+**Yes. The Java application now uses Spring AI `ChatClient`, `OpenAiChatModel`, typed messages, strict output options, tool definitions, streaming, and usage metadata. Spring AI uses the official OpenAI Java SDK underneath.**
 
 | Layer | What it means | In this project |
 | --- | --- | --- |
 | Model | The AI system generating an answer or proposing a tool call | A configured OpenAI model in real mode |
-| Provider API | The HTTP interface used to access the model | OpenAI Responses API |
+| Provider API | The HTTP interface used to access the model | Chat Completions through Spring AI; Responses through the optional direct adapter |
 | Provider SDK | Java classes that call that API for you | `com.openai:openai-java` |
-| Spring AI | Spring abstractions for models, prompts, tools, memory, retrieval, and more | Studied in the final stage; not a runtime dependency |
+| Spring AI | Spring abstractions for models, prompts, tools, memory, retrieval, and more | Compiled runtime dependency; start at `SpringAiModel.java` |
 | Your application | Business rules, access control, approvals, persistence, limits | Spring Boot code in this repository |
 
-Using Spring Boot does not automatically mean a project uses Spring AI. After learning the direct SDK flow, use [SPRING_AI_BRIDGE.md](docs/SPRING_AI_BRIDGE.md) to learn `ChatClient`, advisors, `ChatMemory`, `@Tool`, embeddings, and `VectorStore`.
+Read `SpringAiModel.java` alongside `OpenAiModel.java` to compare the Spring AI and direct SDK approaches. [SPRING_AI_BRIDGE.md](docs/SPRING_AI_BRIDGE.md) maps the implemented APIs and the additional memory, annotation, and retrieval exercises.
 
-RAG, pgvector, document ingestion, and Spring AI advisors are **follow-up exercises**, not features falsely claimed to exist in this application.
+RAG, pgvector, document ingestion, `ChatMemory`, and custom advisors are **follow-up exercises**. The runtime explicitly disables automatic tool-execution advisor registration so every proposed action returns to the Java approval loop.
 
 ## How to study each session
 
@@ -157,7 +157,7 @@ $image = "data:image/png;base64," + [Convert]::ToBase64String($bytes)
 $body = @{message="Describe the visible receipt; do not invent unreadable text"; mode="AGENT"; imageDataUrl=$image} | ConvertTo-Json
 ```
 
-Use `$body` for a run request with a new key. The image must be at most 256 KB; real vision requires `AI_PROVIDER=OPENAI`.
+Use `$body` for a run request with a new key. The image must be at most 256 KB; real vision requires `AI_PROVIDER=SPRING_AI` or `AI_PROVIDER=OPENAI`.
 
 **Done when:** You can explain why remote image URLs are refused and why `final` status matters even if text has already appeared.
 
@@ -313,9 +313,9 @@ Use `$body` for a run request with a new key. The image must be at most 256 KB; 
 
 **Read:** `docs/SPRING_AI_BRIDGE.md`, especially the concept mapping and first `ChatClient` exercise.
 
-**Exercise:** In a separate learning branch/project, implement a simple question/answer endpoint with `ChatClient`. Compare the prompt/model/response concepts with `OpenAiModel.parameters()`.
+**Exercise:** Open `engine/SpringAiModel.java` and its wire tests. Trace `chatClient.prompt(...).stream().chatResponse()`. Explain the system/user/tool messages, strict schema, usage counters, and why tool auto-execution is disabled. Compare with `OpenAiModel.parameters()`.
 
-**Done when:** You can explain the difference between `OpenAIClient` and Spring AI `ChatClient` and identify which one this project's main application actually uses.
+**Done when:** You can explain the difference between `OpenAIClient` and Spring AI `ChatClient` and trace how this project's default Spring AI adapter reaches the official OpenAI SDK.
 
 ### Session 22: Spring AI memory, advisors, and tools
 

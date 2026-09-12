@@ -31,7 +31,8 @@ An approval can pause the same run once. Steps and reserved budgets survive that
 | `RunStore.begin` | Ownership, session serialization, idempotent creation |
 | `ContextPolicy` | Stable instructions, media validation, whole-turn eviction |
 | `BudgetPolicy` | Pre-call time, step, token and estimated-cost checks |
-| `OpenAiModel` | Official SDK request creation and provider event mapping |
+| `SpringAiModel` | Default Spring AI ChatClient integration, messages, strict output, streaming, usage and finish reasons |
+| `OpenAiModel` | Optional direct Responses SDK integration, including encrypted reasoning items |
 | `AgentService` | Bounded loop, outcome dispatch, mandatory hook ordering |
 | `ToolCatalog`, `ToolExecutor` | Exact field validation, tenant-scoped queries, structured errors |
 | `RunStore.decide` | Four-eyes approval and atomic ledger commit |
@@ -54,11 +55,11 @@ External effects would need an outbox/worker, a provider idempotency key, and re
 
 ## Prompt and context boundaries
 
-Application policy is sent through `instructions` on every request. User input never becomes that policy. Read results return as `function_call_output`, tied to the exact provider call ID. The deterministic workflow wraps its code-fetched data in XML markers with escaped delimiters. Markers improve separation; authorization comes from Java and database checks.
+Application policy is sent as a Spring AI `SystemMessage` on every request (`instructions` in the direct Responses adapter). User input never becomes that policy. Read results return as `function_call_output`, tied to the exact provider call ID. The deterministic workflow wraps its code-fetched data in XML markers with escaped delimiters. Markers improve separation; authorization comes from Java and database checks.
 
 Only whole old user turns are evicted. Current-turn tool exchanges are retained intact or rejected for excess size. Images have a separate input-size limit, remote image URLs are disallowed, and selected history retains at most two image-bearing user messages. This implementation does not generate lossy summaries or claim exact tokenizer accounting.
 
-Provider output items are round-tripped as structured items rather than flattened text. The adapter requests encrypted reasoning content for provider-storage-disabled conversations. It never exposes reasoning content through the response API. The application emits only final text deltas as provisional SSE fragments.
+Provider output items are round-tripped as structured items rather than flattened text. The direct Responses adapter requests encrypted reasoning content for provider-storage-disabled conversations. Spring AI translates stored user/assistant/tool exchanges into typed messages for Chat Completions. Start a new session when changing adapters; unsupported Responses-only items are rejected. It never exposes reasoning content through the response API. The application emits only final text deltas as provisional SSE fragments.
 
 ## Mandatory application hooks
 
@@ -77,7 +78,9 @@ Structured validation limits specific failure modes. It cannot prove every sente
 
 ## Retry and streaming semantics
 
-The SDK's automatic retries are disabled. The adapter allows at most two attempts and only retries selected transient HTTP/network failures before receiving any stream event. It honors a usable `Retry-After`; if that wait exceeds the short retry/run budget, it fails instead of retrying early. A broken or incomplete stream is not replayed.
+The SDK's automatic retries are disabled. The Spring AI adapter makes one attempt, requires both a finish reason and token usage, and retains the reserved budget if either is missing. The direct Responses adapter allows at most two attempts and only retries selected transient HTTP/network failures before receiving any stream event. It honors a usable `Retry-After`; if that wait exceeds the short retry/run budget, it fails instead of retrying early. A broken or incomplete stream is not replayed.
+
+Spring AI 2 automatically adds a tool-calling advisor by default. This application disables that registration with `ChatClientAttributes.TOOL_CALLING_ADVISOR_AUTO_REGISTER=false`. Its schema callbacks also throw if accidentally invoked. Only `AgentService` executes validated tools or pauses for approval.
 
 Tool arguments are consumed only from a complete terminal provider response. `delta` events cannot cause a business action. Closing an SSE consumer is detected on callbacks/writes; the worker checks cancellation between operations. An in-flight provider request can take up to its timeout to unwind. A failed provider attempt may still have consumed tokens, which is why reservations remain conservative.
 

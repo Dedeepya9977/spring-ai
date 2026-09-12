@@ -4,7 +4,7 @@ A Spring Boot/Maven backend for learning how an AI application calls a model, us
 
 **Start with [LEARNING_PATH.md](LEARNING_PATH.md).** You do not need an API key, Docker, PostgreSQL, or any AI knowledge for the first lessons.
 
-The main application uses the **official OpenAI Java SDK**, not Spring AI. Shared concepts and Spring AI-specific APIs are explained separately in [SPRING_AI_BRIDGE.md](docs/SPRING_AI_BRIDGE.md). This is a production-oriented reference implementation. Deployment readiness still depends on your identity provider, infrastructure, live model evaluations, load testing, and operational review; see [OPERATIONS.md](docs/OPERATIONS.md).
+The main application uses **Spring AI 2.0.1 `ChatClient` and `OpenAiChatModel`, backed by the official OpenAI Java SDK**. The direct Responses API adapter is also available for comparison. See [SPRING_AI_BRIDGE.md](docs/SPRING_AI_BRIDGE.md) for the actual implementation and further labs. This is a production-oriented reference implementation. Deployment readiness still depends on your identity provider, infrastructure, live model evaluations, load testing, and operational review; see [OPERATIONS.md](docs/OPERATIONS.md).
 
 ## What you can do
 
@@ -24,14 +24,15 @@ The credit is a **local database ledger entry**, not a payment-gateway refund. `
 | Component | Pinned version / requirement |
 | --- | --- |
 | Java source/bytecode | 17; JDK 21 is also suitable and used in Docker/CI |
-| Spring Boot | 3.5.16 |
+| Spring Boot | 4.1.1 |
+| Spring AI | 2.0.1 |
 | Official OpenAI Java SDK | 4.61.0 |
-| MCP Java SDK | 2.0.1 with Jackson 2 integration |
+| MCP Java SDK | 2.0.1 with Jackson 3 integration |
 | Maven wrapper | Maven 3.9.11 |
 | Production database | PostgreSQL; compose example uses 17 |
 | Local learning database | H2 in PostgreSQL compatibility mode, persisted under `data/` |
 
-Versions were resolved from Maven Central on 2026-09-10. Boot 3.5 is deliberately used to keep Jackson 2 and the familiar Spring MVC stack together. Revalidate dependencies before deploying later.
+Versions were resolved from Maven Central on 2026-09-10. Spring Boot 4.1.1 and Spring AI 2.0.1 are the current stable compatible releases at that check; previews such as Boot 4.2.0-M1 are excluded. Application and MCP JSON use Jackson 3; the OpenAI SDK retains its own Jackson 2 mapper. See [UPGRADING.md](docs/UPGRADING.md).
 
 ## First run — Windows / IntelliJ
 
@@ -62,8 +63,10 @@ If script execution is restricted, copy the commands from the script into your t
 Then, in another terminal:
 
 ```bash
-python3 examples/local_demo.py
+curl -u developer:local-only -H 'Content-Type: application/json' -d '{}' http://127.0.0.1:8080/api/sessions
 ```
+
+Use `examples/requests.http` or Postman for subsequent run/approval requests. `examples/local_demo.py` is an optional HTTP client; Python is not required to build or run the Java backend.
 
 The first Maven build downloads dependencies. Later offline builds can use `./mvnw -o verify` when all dependencies are cached. Default tests need no API key and invoke no external model.
 
@@ -85,15 +88,17 @@ Set the key in your terminal/environment or IDE secret settings. Do not put it i
 
 ```powershell
 $env:OPENAI_API_KEY = "your-api-key"
-$env:AI_PROVIDER = "OPENAI"
+$env:AI_PROVIDER = "SPRING_AI"
 .\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=local"
 ```
 
 ```bash
 export OPENAI_API_KEY='your-api-key'
-export AI_PROVIDER=OPENAI
+export AI_PROVIDER=SPRING_AI
 ./mvnw spring-boot:run -Dspring-boot.run.profiles=local
 ```
+
+`SPRING_AI` uses Spring AI Chat Completions. Set `AI_PROVIDER=OPENAI` for the original direct Responses API adapter. Start a new session when switching adapters; Responses reasoning items cannot be translated into Chat Completions history. `STUB` remains the no-key local/test mode.
 
 `OPENAI_MODEL` and `OPENAI_ECONOMY_MODEL` default to `gpt-4.1-mini`. They are kept equal until you have evaluation evidence for a different routing choice. The application sends full selected history on each call with provider storage disabled. `store=false` is **not** a promise of zero provider retention; review the provider's data controls for your account.
 
@@ -150,7 +155,7 @@ For SSE, `delta` events contain provisional provider JSON fragments. They are no
 ./mvnw verify -DpostgresIT=true
 ```
 
-Default verification includes SDK HTTP/SSE contract tests against MockWebServer, H2 lifecycle/security tests, pure contract tests, and a real packaged MCP process test. PostgreSQL is a separate required deployment gate; H2 compatibility does not prove PostgreSQL locking behavior.
+Default verification includes Spring AI and direct SDK HTTP/SSE contract tests against MockWebServer, H2 lifecycle/security tests, pure contract tests, and a real packaged MCP process test. PostgreSQL is a separate required deployment gate; H2 compatibility does not prove PostgreSQL locking behavior.
 
 Opt-in live model evaluations send seven synthetic cases and can incur cost:
 
@@ -159,6 +164,8 @@ export OPENAI_API_KEY='your-api-key'
 export OPENAI_LIVE_EVALS=true
 ./mvnw verify
 ```
+
+Live evaluations default to Spring AI. Set `LIVE_EVAL_PROVIDER=OPENAI` to evaluate the direct Responses adapter instead.
 
 PowerShell equivalent: set `$env:OPENAI_API_KEY` and `$env:OPENAI_LIVE_EVALS = "true"`, then run `.\mvnw.cmd verify`. Remove `OPENAI_LIVE_EVALS` afterward to avoid accidental paid runs. Results appear in `target/failsafe-reports`; coverage is in `target/site/jacoco/index.html`. A passing scripted test suite is not evidence of live model answer quality.
 
@@ -170,6 +177,7 @@ PowerShell equivalent: set `$env:OPENAI_API_KEY` and `$env:OPENAI_LIVE_EVALS = "
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Following a request through the system |
 | [CERTIFICATION_COVERAGE.md](docs/CERTIFICATION_COVERAGE.md) | Comparing your syllabus with implemented features and Claude-specific study gaps |
 | [SPRING_AI_BRIDGE.md](docs/SPRING_AI_BRIDGE.md) | Learning Spring AI abstractions and later RAG/pgvector work |
+| [MCP_WALKTHROUGH.md](docs/MCP_WALKTHROUGH.md) | Understanding the Java MCP client/server and tracing a policy lookup |
 | [OPERATIONS.md](docs/OPERATIONS.md) | Configuring security, PostgreSQL, failure recovery, and deployment |
 | [VALIDATION.md](docs/VALIDATION.md) | Checking what was actually executed in the build environment |
 

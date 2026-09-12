@@ -20,7 +20,7 @@ Do not enable `local` or `test` in an exposed deployment. Those profiles enable 
 | `MCP_ENABLED` | Enables the local policy MCP process; default false |
 | `MCP_SERVER_JAR`, `MCP_JAVA_COMMAND` | Operator-controlled executable configuration |
 
-`AI_PROVIDER` defaults to `OPENAI` outside the local profile. Missing database, identity, or API credentials cause startup failure. Do not “fix” that by disabling security in production.
+`AI_PROVIDER` defaults to `SPRING_AI` outside the local profile. `OPENAI` selects the direct Responses adapter. Create fresh sessions when switching adapters, and evaluate both modes separately. Missing database, identity, or API credentials cause startup failure. Do not “fix” that by disabling security in production.
 
 ## JWT contract
 

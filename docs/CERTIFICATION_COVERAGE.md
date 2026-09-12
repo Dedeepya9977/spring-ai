@@ -16,12 +16,13 @@ One concrete API correction: Claude's documented stop reasons also include `paus
 
 | Topic from your outline | Status | Location and scope |
 | --- | --- | --- |
-| API/SDK integration | Implemented for OpenAI | `OpenAiModel`, official Java SDK, Responses API |
+| API/SDK integration | Implemented for OpenAI | `SpringAiModel` uses Spring AI and official SDK Chat Completions; `OpenAiModel` supports direct Responses |
 | Stateless and multi-turn conversation | Implemented | `RunStore`, `RunState`, explicit history replay and ownership |
 | Content boundaries | Implemented | `ContextPolicy`, distinct message roles/tool outputs; XML escaping in deterministic flow |
 | Stop reasons/status handling | Implemented for OpenAI; Claude study | Response status + content type mapping; Claude differences below |
+| Spring AI integration | Implemented | `ChatClient`, `OpenAiChatModel`, messages, tool definitions, strict schema, stream usage; auto-execution advisor disabled |
 | Real provider streaming | Implemented | SDK SSE consumption and `/runs/stream`; terminal-event requirement |
-| Image + text input | Implemented | Bounded PNG/JPEG data URLs, low-detail vision input; no remote URL fetch |
+| Image + text input | Implemented | Bounded PNG/JPEG data URLs, low-detail option in the direct Responses adapter; no remote URL fetch |
 | Audio/video/PDF input | Extension | Not implemented; “multimodal” does not imply all media types |
 | Idempotency and integration failures | Implemented | Scoped keys, conditional state updates, limited transient retries |
 | Deterministic vs agentic design | Implemented | `ORDER_STATUS` vs `AGENT` modes |
@@ -49,7 +50,9 @@ One concrete API correction: Claude's documented stop reasons also include `paus
 
 `errorCategory` and `isRetryable` are this application's tool-result fields. They are not claimed to be mandatory MCP-standard fields. MCP also has JSON-RPC/protocol errors, which are distinct from a tool result marked `isError`.
 
-## OpenAI is not a renamed Claude API
+## Direct Responses adapter compared with Claude
+
+The table below applies to `AI_PROVIDER=OPENAI`. The default Spring AI Chat Completions adapter maps `stop`, `tool_calls`, `length`, `content_filter`, and refusal metadata; see `SpringAiModel` and its tests.
 
 | Claude concept | OpenAI implementation in this project | Difference to remember |
 | --- | --- | --- |
