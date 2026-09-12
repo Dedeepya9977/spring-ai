@@ -31,7 +31,12 @@ public class SpringAiLanguageModelAdapter implements LanguageModelPort {
       state.transcript.add(
           Map.of("role", "system", "content", prompt.systemInstruction()));
     }
-    state.transcript.add(Map.of("role", "user", "content", prompt.message()));
+    for (var message : prompt.inputMessages()) {
+      state.transcript.add(
+          Map.of(
+              "role", message.role().wireValue(),
+              "content", message.content()));
+    }
 
     var result =
         model.generate(
@@ -40,7 +45,8 @@ public class SpringAiLanguageModelAdapter implements LanguageModelPort {
             Instant.now().plus(properties.providerTimeout()),
             ignored -> {});
     if (result.outcome() != ModelPort.Outcome.COMPLETED || result.text().isBlank()) {
-      throw ApiException.bad("PROVIDER_REQUEST_FAILED", "The model did not return a completed answer");
+      throw ApiException.bad(
+          "PROVIDER_REQUEST_FAILED", "The model did not return a completed answer");
     }
     return new AssistantReply(result.text(), "spring-ai", properties.model());
   }
