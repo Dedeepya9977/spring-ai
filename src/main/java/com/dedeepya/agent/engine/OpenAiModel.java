@@ -1,7 +1,7 @@
 package com.dedeepya.agent.engine;
 
-import com.dedeepya.agent.api.ApiException;
 import com.dedeepya.agent.config.AgentProperties;
+import com.dedeepya.agent.exception.ApiException;
 import com.dedeepya.agent.tools.ToolCatalog;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.openai.client.OpenAIClient;

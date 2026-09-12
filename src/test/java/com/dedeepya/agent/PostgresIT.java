@@ -2,10 +2,12 @@ package com.dedeepya.agent;
 
 import static org.assertj.core.api.Assertions.*;
 
-import com.dedeepya.agent.api.Contracts.*;
-import com.dedeepya.agent.engine.AgentService;
-import com.dedeepya.agent.persistence.RunStore;
+import com.dedeepya.agent.dto.RunMode;
+import com.dedeepya.agent.dto.request.DecisionRequest;
+import com.dedeepya.agent.dto.request.RunRequest;
+import com.dedeepya.agent.repository.RunStore;
 import com.dedeepya.agent.security.Actor;
+import com.dedeepya.agent.service.AgentService;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -46,7 +48,7 @@ class PostgresIT {
             session,
             user,
             "postgres-001",
-            new RunRequest("Credit for ORD-1001", Mode.AGENT, null, null),
+            new RunRequest("Credit for ORD-1001", RunMode.AGENT, null, null),
             e -> {},
             new AtomicBoolean());
     assertThat(pending.status()).isEqualTo("WAITING_APPROVAL");
@@ -79,9 +81,9 @@ class PostgresIT {
 
   private boolean approve(UUID id, Actor actor) {
     try {
-      store.decide(id, actor, new Decision(true, "Confirmed the service delay"));
+      store.decide(id, actor, new DecisionRequest(true, "Confirmed the service delay"));
       return true;
-    } catch (com.dedeepya.agent.api.ApiException expected) {
+    } catch (com.dedeepya.agent.exception.ApiException expected) {
       return false;
     }
   }

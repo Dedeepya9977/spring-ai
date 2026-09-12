@@ -1,4 +1,4 @@
-package com.dedeepya.agent.api;
+package com.dedeepya.agent.exception;
 
 import org.springframework.http.HttpStatus;
 

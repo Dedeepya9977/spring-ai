@@ -2,12 +2,18 @@ package com.dedeepya.agent;
 
 import static org.assertj.core.api.Assertions.*;
 
-import com.dedeepya.agent.api.*;
-import com.dedeepya.agent.api.Contracts.*;
 import com.dedeepya.agent.config.AgentProperties;
+import com.dedeepya.agent.dto.RunMode;
+import com.dedeepya.agent.dto.request.DecisionRequest;
+import com.dedeepya.agent.dto.request.RunRequest;
+import com.dedeepya.agent.dto.response.AnswerResponse;
+import com.dedeepya.agent.dto.response.RunResponse;
 import com.dedeepya.agent.engine.*;
-import com.dedeepya.agent.persistence.RunStore;
+import com.dedeepya.agent.exception.*;
+import com.dedeepya.agent.repository.RunStore;
 import com.dedeepya.agent.security.Actor;
+import com.dedeepya.agent.service.AgentService;
+import com.dedeepya.agent.service.impl.AgentServiceImpl;
 import com.dedeepya.agent.tools.*;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.util.*;
@@ -42,10 +48,13 @@ class RunLifecycleTest {
 
   RunRequest request(boolean credit) {
     return new RunRequest(
-        credit ? "Please request a credit for ORD-1001" : "Find ORD-1001", Mode.AGENT, null, null);
+        credit ? "Please request a credit for ORD-1001" : "Find ORD-1001",
+        RunMode.AGENT,
+        null,
+        null);
   }
 
-  RunView run(UUID session, String key, RunRequest request) {
+  RunResponse run(UUID session, String key, RunRequest request) {
     return service.run(session, developer, key, request, e -> {}, new AtomicBoolean());
   }
 
@@ -65,14 +74,15 @@ class RunLifecycleTest {
     assertThat(store.view(store.load(pending.id())).pending().arguments()).contains("10000");
     var result =
         service.decide(
-            pending.id(), reviewer, new Decision(true, "Reviewed delayed service evidence"));
+            pending.id(), reviewer, new DecisionRequest(true, "Reviewed delayed service evidence"));
     assertThat(result.status()).isEqualTo("COMPLETED");
-    assertThat(result.answer().recommendedAction()).isEqualTo(Answer.Action.CREDIT_RECORDED);
+    assertThat(result.answer().recommendedAction())
+        .isEqualTo(AnswerResponse.Action.CREDIT_RECORDED);
     assertThat(countCredits()).isEqualTo(1);
     assertThatThrownBy(
             () ->
                 service.decide(
-                    pending.id(), reviewer, new Decision(true, "Replay the same decision")))
+                    pending.id(), reviewer, new DecisionRequest(true, "Replay the same decision")))
         .isInstanceOf(ApiException.class);
     assertThat(countCredits()).isEqualTo(1);
   }
@@ -82,7 +92,7 @@ class RunLifecycleTest {
     var pending = run(store.createSession(developer), "deny-00001", request(true));
     var result =
         service.decide(
-            pending.id(), reviewer, new Decision(false, "Insufficient service evidence"));
+            pending.id(), reviewer, new DecisionRequest(false, "Insufficient service evidence"));
     assertThat(result.status()).isEqualTo("COMPLETED");
     assertThat(countCredits()).isZero();
   }
@@ -95,7 +105,7 @@ class RunLifecycleTest {
                 service.decide(
                     pending.id(),
                     new Actor("demo", "developer", true),
-                    new Decision(true, "I approve my own action")))
+                    new DecisionRequest(true, "I approve my own action")))
         .isInstanceOf(ApiException.class)
         .hasMessageContaining("different person");
     assertThatThrownBy(
@@ -176,7 +186,9 @@ class RunLifecycleTest {
       assertThatThrownBy(
               () ->
                   service.decide(
-                      pending.id(), reviewer, new Decision(true, "Review old delayed service")))
+                      pending.id(),
+                      reviewer,
+                      new DecisionRequest(true, "Review old delayed service")))
           .hasMessageContaining("no longer satisfies");
       assertThat(countCredits()).isZero();
     } finally {
@@ -203,7 +215,7 @@ class RunLifecycleTest {
                 10,
                 0,
                 20);
-    var agent = new AgentService(store, truncated, tools, budgets, output, metrics, config);
+    var agent = new AgentServiceImpl(store, truncated, tools, budgets, output, metrics, config);
     var result =
         agent.run(
             store.createSession(developer),
@@ -220,7 +232,7 @@ class RunLifecycleTest {
   void maliciousToolLoopStopsAtABound() {
     ModelPort malicious =
         (s, t, d, c) -> StubModel.call("execute_sql", "{\"sql\":\"delete everything\"}");
-    var agent = new AgentService(store, malicious, tools, budgets, output, metrics, config);
+    var agent = new AgentServiceImpl(store, malicious, tools, budgets, output, metrics, config);
     var result =
         agent.run(
             store.createSession(developer),

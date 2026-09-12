@@ -1,6 +1,6 @@
 package com.dedeepya.agent.engine;
 
-import com.dedeepya.agent.api.Contracts.Answer;
+import com.dedeepya.agent.dto.response.AnswerResponse;
 import java.math.BigDecimal;
 import java.util.*;
 
@@ -15,7 +15,7 @@ public class RunState {
   public long reservedTokens;
   public BigDecimal reservedCost = BigDecimal.ZERO;
   public BigDecimal estimatedCost = BigDecimal.ZERO;
-  public Answer answer;
+  public AnswerResponse answer;
   public boolean creditRecorded;
   public String model;
   public String orderId;

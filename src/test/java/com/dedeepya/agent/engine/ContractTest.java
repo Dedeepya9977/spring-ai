@@ -3,7 +3,9 @@ package com.dedeepya.agent.engine;
 import static org.assertj.core.api.Assertions.*;
 
 import com.dedeepya.agent.Fixtures;
-import com.dedeepya.agent.api.Contracts.*;
+import com.dedeepya.agent.dto.RunMode;
+import com.dedeepya.agent.dto.request.RunRequest;
+import com.dedeepya.agent.dto.response.AnswerResponse;
 import com.dedeepya.agent.tools.ToolCatalog;
 import java.time.Instant;
 import java.util.*;
@@ -55,18 +57,21 @@ class ContractTest {
             () ->
                 output.validate(
                     Jsons.write(
-                        new Answer(
-                            "Done", "ORD-1001", Answer.Action.ANSWER, List.of("order:ORD-9001"))),
+                        new AnswerResponse(
+                            "Done",
+                            "ORD-1001",
+                            AnswerResponse.Action.ANSWER,
+                            List.of("order:ORD-9001"))),
                     state))
         .hasMessageContaining("contract");
     assertThatThrownBy(
             () ->
                 output.validate(
                     Jsons.write(
-                        new Answer(
+                        new AnswerResponse(
                             "Done",
                             "ORD-1001",
-                            Answer.Action.CREDIT_RECORDED,
+                            AnswerResponse.Action.CREDIT_RECORDED,
                             List.of("order:ORD-1001"))),
                     state))
         .hasMessageContaining("contract");
@@ -120,7 +125,8 @@ class ContractTest {
   @Test
   void rejectsRemoteVisionUrl() {
     var request =
-        new RunRequest("read image", Mode.AGENT, null, "http://169.254.169.254/latest/meta-data");
+        new RunRequest(
+            "read image", RunMode.AGENT, null, "http://169.254.169.254/latest/meta-data");
     assertThatThrownBy(() -> new ContextPolicy(Fixtures.config()).addUser(new RunState(), request))
         .hasMessageContaining("remote URLs");
   }

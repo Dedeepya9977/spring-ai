@@ -1,11 +1,16 @@
-package com.dedeepya.agent.engine;
+package com.dedeepya.agent.service.impl;
 
-import com.dedeepya.agent.api.*;
-import com.dedeepya.agent.api.Contracts.*;
 import com.dedeepya.agent.config.AgentProperties;
-import com.dedeepya.agent.persistence.RunStore;
-import com.dedeepya.agent.persistence.RunStore.Run;
+import com.dedeepya.agent.dto.request.DecisionRequest;
+import com.dedeepya.agent.dto.request.RunRequest;
+import com.dedeepya.agent.dto.response.RunResponse;
+import com.dedeepya.agent.engine.*;
+import com.dedeepya.agent.exception.*;
+import com.dedeepya.agent.repository.RunStore;
+import com.dedeepya.agent.repository.RunStore.Run;
 import com.dedeepya.agent.security.Actor;
+import com.dedeepya.agent.service.AgentService;
+import com.dedeepya.agent.service.event.AgentEvent;
 import com.dedeepya.agent.tools.*;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.util.*;
@@ -18,7 +23,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 @Service
-public class AgentService {
+public class AgentServiceImpl implements AgentService {
   private final RunStore store;
   private final ModelPort model;
   private final ToolExecutor tools;
@@ -27,7 +32,7 @@ public class AgentService {
   private final MeterRegistry metrics;
   private final Semaphore slots;
 
-  public AgentService(
+  public AgentServiceImpl(
       RunStore store,
       ModelPort model,
       ToolExecutor tools,
@@ -44,12 +49,13 @@ public class AgentService {
     this.slots = new Semaphore(config.concurrency());
   }
 
-  public RunView run(
+  @Override
+  public RunResponse run(
       UUID session,
       Actor actor,
       String key,
       RunRequest request,
-      Consumer<Event> events,
+      Consumer<AgentEvent> events,
       AtomicBoolean cancelled) {
     acquire();
     try {
@@ -62,7 +68,8 @@ public class AgentService {
     }
   }
 
-  public RunView decide(UUID id, Actor actor, Decision decision) {
+  @Override
+  public RunResponse decide(UUID id, Actor actor, DecisionRequest decision) {
     acquire();
     try {
       Run run = store.decide(id, actor, decision);
@@ -73,6 +80,16 @@ public class AgentService {
     }
   }
 
+  @Override
+  public RunResponse get(UUID id, Actor actor) {
+    return store.view(store.visible(id, actor));
+  }
+
+  @Override
+  public void cancel(UUID id, Actor actor) {
+    store.cancel(id, actor);
+  }
+
   private void acquire() {
     if (!slots.tryAcquire())
       throw new ApiException(
@@ -81,10 +98,10 @@ public class AgentService {
           "All run slots are busy; retry later with the same idempotency key");
   }
 
-  private void execute(Run run, Consumer<Event> events, AtomicBoolean cancelled) {
+  private void execute(Run run, Consumer<AgentEvent> events, AtomicBoolean cancelled) {
     long started = System.nanoTime();
     try {
-      events.accept(new Event("run", Map.of("id", run.id())));
+      events.accept(new AgentEvent("run", Map.of("id", run.id())));
       boolean agent = "AGENT".equals(run.mode());
       if (!agent && run.state().steps == 0) {
         if (run.state().orderId == null)
@@ -117,7 +134,8 @@ public class AgentService {
                 delta -> {
                   if (cancelled.get())
                     throw ApiException.conflict("CLIENT_DISCONNECTED", "Client disconnected");
-                  events.accept(new Event("delta", Map.of("text", delta, "provisional", true)));
+                  events.accept(
+                      new AgentEvent("delta", Map.of("text", delta, "provisional", true)));
                 });
         budgets.record(run.state(), result);
         metrics.counter("agent.tokens", "kind", "input").increment(result.inputTokens());
@@ -169,7 +187,8 @@ public class AgentService {
             } else reply = tools.executeRead(run.tenant(), call);
             ToolExecutor.appendResult(run.state(), call.id(), reply);
             events.accept(
-                new Event("tool", Map.of("name", safeToolName(call.name()), "ok", reply.ok())));
+                new AgentEvent(
+                    "tool", Map.of("name", safeToolName(call.name()), "ok", reply.ok())));
             metrics
                 .counter(
                     "agent.tool.calls",

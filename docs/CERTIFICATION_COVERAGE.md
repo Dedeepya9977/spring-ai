@@ -35,7 +35,7 @@ One concrete API correction: Claude's documented stop reasons also include `paus
 | Structured tool errors | Implemented | `Reply` with category, retryability, feedback; MCP `isError` on server errors |
 | Prompt engineering | Implemented + exercises | Stable policy, untrusted inputs, explicit tool descriptions, controlled final shape |
 | Context/token hygiene | Implemented | Whole-turn trimming, bounded images/results, conservative reservations |
-| Deterministic hooks | Implemented in Java; Claude study | Mandatory control points in `AgentService` and `RunStore` |
+| Deterministic hooks | Implemented in Java; Claude study | Mandatory control points in `AgentServiceImpl` and `RunStore` |
 | Identity, secrets, access control | Implemented + deployment config | JWT issuer/audience validation, scopes, tenant/owner checks, env secrets |
 | Prompt injection/data leakage controls | Implemented defense layers | No arbitrary execution tool, bounded inputs, isolated identity, protected writes; no universal safety guarantee |
 | Unit/integration/adversarial tests | Implemented | Contract, SDK wire, security, lifecycle, MCP-process tests |

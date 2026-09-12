@@ -39,7 +39,7 @@ Keep a `learning-notes.md` file locally. For each session write: “What it does
 
 **Learn:** A client sends JSON to your Spring controller. Your application can call another HTTP API, then return JSON. An AI API is still an external API: it has credentials, requests, responses, timeouts, and failures.
 
-**Read:** `README.md`, `Application.java`, `api/AgentController.java`, `api/Contracts.java`. Java paths below are relative to `src/main/java/com/dedeepya/agent/` unless stated otherwise.
+**Read:** `README.md`, `Application.java`, `controller/AgentController.java`, `dto/request/RunRequest.java and dto/response/RunResponse.java`. Java paths below are relative to `src/main/java/com/dedeepya/agent/` unless stated otherwise.
 
 **Do:** Open `pom.xml` in IntelliJ. Configure JDK 17 or 21 for the project and Maven runner. Run:
 
@@ -73,7 +73,7 @@ In another terminal run `examples/local-demo.ps1`, or use `examples/requests.htt
 
 **Learn:** Conversation/session, execution/run, and business order are different records.
 
-**Read:** `Contracts.RunRequest`, `RunStore.createSession`, `RunStore.begin`.
+**Read:** `RunRequest`, `RunStore.createSession`, `RunStore.begin`.
 
 **Do:** Create a session, then submit:
 
@@ -133,7 +133,7 @@ Supply an `Idempotency-Key`, for example `lesson-three-001`.
 
 **Learn:** “Please return JSON” is a prompt request. A provider JSON schema constrains shape. Application validation separately checks whether returned values are acceptable.
 
-**Read:** `OutputPolicy.schema()`, `OutputPolicy.validate()`, `Contracts.Answer`.
+**Read:** `OutputPolicy.schema()`, `OutputPolicy.validate()`, `AnswerResponse`.
 
 **Do:** Run `ContractTest`. Read the invented-evidence and invented-credit cases.
 
@@ -179,7 +179,7 @@ Use `$body` for a run request with a new key. The image must be at most 256 KB; 
 
 **Learn:** An agent loop repeats “call model → inspect outcome → possibly call tool → return result”. It needs a reason to stop.
 
-**Read:** `AgentService.execute`. Focus on the switch over `ModelPort.Outcome`; ignore metrics initially.
+**Read:** `AgentServiceImpl.execute`. Focus on the switch over `ModelPort.Outcome`; ignore metrics initially.
 
 **Do:** Draw the five possible outcomes: complete, tools, refusal, incomplete, failure. Identify the Java code for each.
 
@@ -191,7 +191,7 @@ Use `$body` for a run request with a new key. The image must be at most 256 KB; 
 
 **Learn:** Some tasks have a known sequence that Java should control. Others benefit from letting the model select among allowed steps.
 
-**Read:** The `ORDER_STATUS` branch in `AgentService.execute`.
+**Read:** The `ORDER_STATUS` branch in `AgentServiceImpl.execute`.
 
 **Do:** Submit the same order question once with `AGENT` and once with `ORDER_STATUS` plus `orderId`.
 
@@ -287,7 +287,7 @@ Use `$body` for a run request with a new key. The image must be at most 256 KB; 
 
 **Learn:** You need evidence about failures without logging prompts, images, API keys, or complete provider exceptions.
 
-**Read:** `RequestBoundaryFilter`, `ExceptionAdvice`, metric calls in `AgentService`, `audit_events` schema.
+**Read:** `RequestBoundaryFilter`, `GlobalExceptionHandler`, metric calls in `AgentServiceImpl`, `audit_events` schema.
 
 **Exercise:** Trigger a missing order, a busy session, and a failed run. Follow the correlation ID and run ID. Identify which data is available from the API and which should stay out of logs.
 
@@ -357,3 +357,15 @@ Use `$body` for a run request with a new key. The image must be at most 256 KB; 
 - [ ] I can describe my own changes honestly in an interview.
 
 For your first session, do only sessions 1 and 2. Get the app running, request one order, and deny one proposed credit. The rest can wait until those actions make sense.
+
+## Reading the MVC flow after the package refactor
+
+1. Open `controller/SessionController.java` and find `create()`.
+2. Follow its `SessionService` interface into `service/impl/SessionServiceImpl.java`.
+3. Follow the call to `repository/RunStore.java` to see the database insert.
+4. Inspect `dto/response/SessionResponse.java`: its `id` becomes the HTTP JSON response.
+5. Open `controller/AgentController.java`; follow a `RunRequest` into `AgentService` and `AgentServiceImpl`.
+6. Compare `dto/request` validation annotations with the response records in `dto/response`.
+7. Inspect `exception/GlobalExceptionHandler.java` to see how failures become consistent HTTP problem responses.
+
+Controllers handle HTTP details. Service interfaces declare application operations. Implementations coordinate those operations. The repository performs database work. Constructor injection connects these components without controllers creating them manually.

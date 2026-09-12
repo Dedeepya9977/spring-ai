@@ -1,13 +1,13 @@
 package com.dedeepya.agent.engine;
 
-import com.dedeepya.agent.api.ApiException;
-import com.dedeepya.agent.api.Contracts.Answer;
+import com.dedeepya.agent.dto.response.AnswerResponse;
+import com.dedeepya.agent.exception.ApiException;
 import java.util.*;
 import org.springframework.stereotype.Component;
 
 @Component
 public class OutputPolicy {
-  public Answer validate(String json, RunState state) {
+  public AnswerResponse validate(String json, RunState state) {
     try {
       var node = Jsons.tree(json);
       if (!node.isObject()
@@ -16,7 +16,7 @@ public class OutputPolicy {
           || !node.has("orderId")
           || !node.has("recommendedAction")
           || !node.has("evidence")) throw new IllegalArgumentException();
-      Answer answer = Jsons.read(json, Answer.class);
+      AnswerResponse answer = Jsons.read(json, AnswerResponse.class);
       if (answer.summary() == null
           || answer.summary().isBlank()
           || answer.summary().length() > 2000
@@ -27,9 +27,9 @@ public class OutputPolicy {
         throw new IllegalArgumentException();
       if (answer.orderId() != null && !state.evidence.contains("order:" + answer.orderId()))
         throw new IllegalArgumentException();
-      if (answer.recommendedAction() == Answer.Action.CREDIT_RECORDED && !state.creditRecorded)
-        throw new IllegalArgumentException();
-      if (answer.recommendedAction() == Answer.Action.ANSWER && answer.evidence().isEmpty())
+      if (answer.recommendedAction() == AnswerResponse.Action.CREDIT_RECORDED
+          && !state.creditRecorded) throw new IllegalArgumentException();
+      if (answer.recommendedAction() == AnswerResponse.Action.ANSWER && answer.evidence().isEmpty())
         throw new IllegalArgumentException();
       return answer;
     } catch (IllegalArgumentException ex) {

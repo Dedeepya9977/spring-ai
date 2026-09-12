@@ -1,10 +1,13 @@
-package com.dedeepya.agent.api;
+package com.dedeepya.agent.controller;
 
-import com.dedeepya.agent.api.Contracts.*;
 import com.dedeepya.agent.config.AgentProperties;
-import com.dedeepya.agent.engine.AgentService;
-import com.dedeepya.agent.persistence.RunStore;
+import com.dedeepya.agent.dto.request.DecisionRequest;
+import com.dedeepya.agent.dto.request.RunRequest;
+import com.dedeepya.agent.dto.response.RunResponse;
+import com.dedeepya.agent.exception.ApiException;
 import com.dedeepya.agent.security.Actor;
+import com.dedeepya.agent.service.AgentService;
+import com.dedeepya.agent.service.event.AgentEvent;
 import jakarta.validation.Valid;
 import java.io.IOException;
 import java.util.*;
@@ -19,35 +22,18 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 @RequestMapping("/api")
 public class AgentController {
   private final AgentService service;
-  private final RunStore store;
   private final ExecutorService streamExecutor;
   private final AgentProperties config;
 
   public AgentController(
-      AgentService service,
-      RunStore store,
-      ExecutorService streamExecutor,
-      AgentProperties config) {
+      AgentService service, ExecutorService streamExecutor, AgentProperties config) {
     this.service = service;
-    this.store = store;
     this.streamExecutor = streamExecutor;
     this.config = config;
   }
 
-  @PostMapping("/sessions")
-  @ResponseStatus(HttpStatus.CREATED)
-  Map<String, UUID> session(Authentication auth) {
-    return Map.of("id", store.createSession(Actor.from(auth)));
-  }
-
-  @DeleteMapping("/sessions/{id}")
-  @ResponseStatus(HttpStatus.NO_CONTENT)
-  void delete(@PathVariable UUID id, Authentication auth) {
-    store.deleteSession(id, Actor.from(auth));
-  }
-
   @PostMapping("/sessions/{sessionId}/runs")
-  RunView run(
+  public RunResponse run(
       @PathVariable UUID sessionId,
       @RequestHeader("Idempotency-Key") String key,
       @Valid @RequestBody RunRequest request,
@@ -59,7 +45,7 @@ public class AgentController {
   @PostMapping(
       value = "/sessions/{sessionId}/runs/stream",
       produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-  SseEmitter stream(
+  public SseEmitter stream(
       @PathVariable UUID sessionId,
       @RequestHeader("Idempotency-Key") String key,
       @Valid @RequestBody RunRequest request,
@@ -74,16 +60,16 @@ public class AgentController {
       streamExecutor.execute(
           () -> {
             try {
-              RunView result =
+              RunResponse result =
                   service.run(
                       sessionId, actor, key, request, event -> send(emitter, event), cancelled);
-              send(emitter, new Event("final", result));
+              send(emitter, new AgentEvent("final", result));
               emitter.complete();
             } catch (ApiException ex) {
               try {
                 send(
                     emitter,
-                    new Event("error", Map.of("code", ex.code(), "message", ex.getMessage())));
+                    new AgentEvent("error", Map.of("code", ex.code(), "message", ex.getMessage())));
               } finally {
                 emitter.complete();
               }
@@ -99,23 +85,23 @@ public class AgentController {
   }
 
   @GetMapping("/runs/{id}")
-  RunView get(@PathVariable UUID id, Authentication auth) {
-    return store.view(store.visible(id, Actor.from(auth)));
+  public RunResponse get(@PathVariable UUID id, Authentication auth) {
+    return service.get(id, Actor.from(auth));
   }
 
   @PostMapping("/runs/{id}/decision")
-  RunView decide(
-      @PathVariable UUID id, @Valid @RequestBody Decision decision, Authentication auth) {
+  public RunResponse decide(
+      @PathVariable UUID id, @Valid @RequestBody DecisionRequest decision, Authentication auth) {
     return service.decide(id, Actor.from(auth), decision);
   }
 
   @PostMapping("/runs/{id}/cancel")
   @ResponseStatus(HttpStatus.NO_CONTENT)
-  void cancel(@PathVariable UUID id, Authentication auth) {
-    store.cancel(id, Actor.from(auth));
+  public void cancel(@PathVariable UUID id, Authentication auth) {
+    service.cancel(id, Actor.from(auth));
   }
 
-  private static void send(SseEmitter emitter, Event event) {
+  private static void send(SseEmitter emitter, AgentEvent event) {
     try {
       emitter.send(SseEmitter.event().name(event.type()).data(event.data()));
     } catch (IOException ex) {

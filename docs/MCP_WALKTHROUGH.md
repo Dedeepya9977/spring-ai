@@ -6,7 +6,7 @@ MCP is a protocol for applications to discover and use external tools and contex
 
 | Role | Code | Job |
 | --- | --- | --- |
-| Host | Spring Boot application, `AgentService`, `ToolExecutor` | Talks to the model and enforces identity, budgets, tool validation, and approvals |
+| Host | Spring Boot application, `AgentServiceImpl`, `ToolExecutor` | Talks to the model and enforces identity, budgets, tool validation, and approvals |
 | MCP client | `mcp/McpPolicyGateway.java` | Starts the server, initializes the connection, discovers its tool, calls it, and reads its resource |
 | MCP server | `mcp/PolicyServer.java` | Advertises and serves the fixed policy through the MCP Java SDK |
 
@@ -44,7 +44,7 @@ The resource URI is an MCP identifier, not an HTTP address. The agent flow uses 
 ```mermaid
 sequenceDiagram
     participant M as OpenAI model
-    participant H as AgentService / ToolExecutor
+    participant H as AgentServiceImpl / ToolExecutor
     participant C as McpPolicyGateway
     participant S as PolicyServer process
     M-->>H: Propose search_policy(topic)

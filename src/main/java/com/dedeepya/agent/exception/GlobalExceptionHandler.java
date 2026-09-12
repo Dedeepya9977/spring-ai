@@ -1,4 +1,4 @@
-package com.dedeepya.agent.api;
+package com.dedeepya.agent.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.LoggerFactory;
@@ -8,7 +8,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
 @RestControllerAdvice
-public class ExceptionAdvice {
+public class GlobalExceptionHandler {
   @ExceptionHandler(ApiException.class)
   ResponseEntity<ProblemDetail> api(ApiException ex, HttpServletRequest req) {
     return problem(ex.status(), ex.code(), ex.getMessage(), req);

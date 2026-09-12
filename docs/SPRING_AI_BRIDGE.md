@@ -2,7 +2,7 @@
 
 ## What is implemented now?
 
-The default real provider is `AI_PROVIDER=SPRING_AI`. The request passes through `AgentService` → `SpringAiModel` → Spring AI `ChatClient` → `OpenAiChatModel` → the official OpenAI Java SDK → Chat Completions. The local profile still uses the no-key scripted `STUB`.
+The default real provider is `AI_PROVIDER=SPRING_AI`. The request passes through `AgentServiceImpl` → `SpringAiModel` → Spring AI `ChatClient` → `OpenAiChatModel` → the official OpenAI Java SDK → Chat Completions. The local profile still uses the no-key scripted `STUB`.
 
 `pom.xml` pins Spring Boot **4.1.1** and the Spring AI BOM **2.0.1**. Spring documents support for Boot 4.0.x/4.1.x in Spring AI 2.0.x. Explicit `spring-ai-openai` and `spring-ai-client-chat` modules are configured in `RuntimeConfiguration`; provider construction is deliberately conditional so local mode needs no API key. [Spring AI getting started](https://docs.spring.io/spring-ai/reference/getting-started.html).
 
@@ -19,7 +19,7 @@ The Java application uses `ChatClient`, `Prompt`, `SystemMessage`, `UserMessage`
 | `RunState.transcript` | `ChatMemory`, memory repository and memory advisor | Tenant/owner isolation and complete tool exchanges |
 | `OutputPolicy` | Structured output/entity conversion | Semantic/business validation and evidence checks |
 | `ToolCatalog` | Implemented schema callbacks; `@Tool` is a later lab | Exact arguments, identity, least privilege, authorization |
-| `AgentService` checks | Advisors and application services | Mandatory controls must not be bypassable by the model |
+| `AgentServiceImpl` checks | Advisors and application services | Mandatory controls must not be bypassable by the model |
 | `PolicyGateway` | Tool callback or MCP integration | Server trust, tool allowlist, result bounds |
 | `SpringAiModel.generate` | Implemented `ChatClient.stream()` | Cancellation, terminal state, provisional content handling |
 | `BudgetPolicy` and Micrometer | Response usage metadata and observations | Real budgets, rate card, per-tenant limits |
@@ -35,7 +35,7 @@ The Java application uses `ChatClient`, `Prompt`, `SystemMessage`, `UserMessage`
 4. Read the native JSON schema, `store(false)`, one-tool-at-a-time setting, response usage, and finish-reason mapping.
 5. Run `./mvnw -Dtest=SpringAiModelTest test` (PowerShell: `.\mvnw.cmd "-Dtest=SpringAiModelTest" test`). These tests use a local HTTP server and cost nothing.
 
-**Critical detail:** Spring AI 2 automatically registers a tool-calling advisor. This project sets `ChatClientAttributes.TOOL_CALLING_ADVISOR_AUTO_REGISTER` to `false`. Its callbacks supply schemas and throw if automatically invoked. A completed tool request returns to `AgentService`, which validates it and either executes an authorized read or records a durable human approval request. Never enable automatic tool execution for the credit workflow.
+**Critical detail:** Spring AI 2 automatically registers a tool-calling advisor. This project sets `ChatClientAttributes.TOOL_CALLING_ADVISOR_AUTO_REGISTER` to `false`. Its callbacks supply schemas and throw if automatically invoked. A completed tool request returns to `AgentServiceImpl`, which validates it and either executes an authorized read or records a durable human approval request. Never enable automatic tool execution for the credit workflow.
 
 **Exercise:** Compare the Spring AI wire test's `/v1/chat/completions` request with the direct SDK test's `/v1/responses` request. Identify the differing history, tool-result, status, and usage fields. Neither adapter automatically converts Claude stop reasons.
 

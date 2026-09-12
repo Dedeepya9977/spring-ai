@@ -33,7 +33,7 @@ An approval can pause the same run once. Steps and reserved budgets survive that
 | `BudgetPolicy` | Pre-call time, step, token and estimated-cost checks |
 | `SpringAiModel` | Default Spring AI ChatClient integration, messages, strict output, streaming, usage and finish reasons |
 | `OpenAiModel` | Optional direct Responses SDK integration, including encrypted reasoning items |
-| `AgentService` | Bounded loop, outcome dispatch, mandatory hook ordering |
+| `AgentServiceImpl` | Bounded loop, outcome dispatch, mandatory hook ordering |
 | `ToolCatalog`, `ToolExecutor` | Exact field validation, tenant-scoped queries, structured errors |
 | `RunStore.decide` | Four-eyes approval and atomic ledger commit |
 | `OutputPolicy` | Final JSON and evidence/business checks |
@@ -80,7 +80,7 @@ Structured validation limits specific failure modes. It cannot prove every sente
 
 The SDK's automatic retries are disabled. The Spring AI adapter makes one attempt, requires both a finish reason and token usage, and retains the reserved budget if either is missing. The direct Responses adapter allows at most two attempts and only retries selected transient HTTP/network failures before receiving any stream event. It honors a usable `Retry-After`; if that wait exceeds the short retry/run budget, it fails instead of retrying early. A broken or incomplete stream is not replayed.
 
-Spring AI 2 automatically adds a tool-calling advisor by default. This application disables that registration with `ChatClientAttributes.TOOL_CALLING_ADVISOR_AUTO_REGISTER=false`. Its schema callbacks also throw if accidentally invoked. Only `AgentService` executes validated tools or pauses for approval.
+Spring AI 2 automatically adds a tool-calling advisor by default. This application disables that registration with `ChatClientAttributes.TOOL_CALLING_ADVISOR_AUTO_REGISTER=false`. Its schema callbacks also throw if accidentally invoked. Only `AgentServiceImpl` executes validated tools or pauses for approval.
 
 Tool arguments are consumed only from a complete terminal provider response. `delta` events cannot cause a business action. Closing an SSE consumer is detected on callbacks/writes; the worker checks cancellation between operations. An in-flight provider request can take up to its timeout to unwind. A failed provider attempt may still have consumed tokens, which is why reservations remain conservative.
 
@@ -101,3 +101,26 @@ The server process has the operating-system permissions of its container/user. C
 - No vector search is claimed. The small fixed policy is retrieved by a tool. RAG is a separate learning extension.
 
 Implementation references: [OpenAI function calling](https://developers.openai.com/api/docs/guides/function-calling), [OpenAI streaming](https://developers.openai.com/api/docs/guides/streaming-responses), and [MCP Java SDK](https://java.sdk.modelcontextprotocol.io/latest/).
+
+## Spring MVC packages and service boundaries
+
+| Package | Responsibility | Examples |
+| --- | --- | --- |
+| `controller` | HTTP routing, request validation, authenticated identity, SSE transport | `AgentController`, `SessionController` |
+| `dto.request` | Typed API inputs with Jakarta Bean Validation | `RunRequest`, `DecisionRequest` |
+| `dto.response` | Typed API outputs with stable JSON field names | `RunResponse`, `SessionResponse`, `AnswerResponse` |
+| `dto` | Shared API enum | `RunMode` |
+| `service` | Application use-case interfaces | `AgentService`, `SessionService` |
+| `service.impl` | Workflow execution and session lifecycle implementations | `AgentServiceImpl`, `SessionServiceImpl` |
+| `service.event` | Internal event envelope used by the streaming adapter | `AgentEvent` |
+| `repository` | JDBC persistence and atomic state transitions | `RunStore` |
+| `exception` | Application failures and centralized HTTP problem responses | `ApiException`, `GlobalExceptionHandler` |
+| `engine` | Model adapters, context, budgets, structured-output policies | `SpringAiModel`, `ModelPort`, `OutputPolicy` |
+
+Controllers use constructor-injected service interfaces and never access `RunStore` directly. `POST /api/sessions` routes through `SessionController` → `SessionService` → `SessionServiceImpl` → `RunStore`, returning `SessionResponse`. Run, get, decision, and cancellation requests go through `AgentService` and `AgentServiceImpl`. SSE lifecycle and servlet details stay in the controller; the service emits transport-independent `AgentEvent` objects.
+
+Each request and response is a separate Java record. Their names and packages changed, but endpoint URLs, JSON property names, enum values, validation constraints, and status codes are preserved. The prior nested `Contracts` container is removed. These source-level class moves require updating imports for Java consumers.
+
+JDBC transactions remain scoped to atomic persistence operations in `RunStore`; the whole model execution loop is not wrapped in a database transaction. This avoids holding locks while waiting for external model calls or human approval. DTO projection assembly remains in the JDBC store for this application; there is no JPA entity layer.
+
+Interfaces provide an explicit service boundary here. This package organization is a project convention, not a requirement imposed by Spring MVC.

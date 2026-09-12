@@ -1,6 +1,6 @@
 package com.dedeepya.agent.security;
 
-import com.dedeepya.agent.api.ApiException;
+import com.dedeepya.agent.exception.ApiException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;

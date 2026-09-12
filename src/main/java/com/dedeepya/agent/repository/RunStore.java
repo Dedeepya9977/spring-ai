@@ -1,9 +1,15 @@
-package com.dedeepya.agent.persistence;
+package com.dedeepya.agent.repository;
 
-import com.dedeepya.agent.api.*;
-import com.dedeepya.agent.api.Contracts.*;
 import com.dedeepya.agent.config.AgentProperties;
+import com.dedeepya.agent.dto.RunMode;
+import com.dedeepya.agent.dto.request.DecisionRequest;
+import com.dedeepya.agent.dto.request.RunRequest;
+import com.dedeepya.agent.dto.response.CreditReceiptResponse;
+import com.dedeepya.agent.dto.response.PendingApprovalResponse;
+import com.dedeepya.agent.dto.response.RunResponse;
+import com.dedeepya.agent.dto.response.TokenUsageResponse;
 import com.dedeepya.agent.engine.*;
+import com.dedeepya.agent.exception.*;
 import com.dedeepya.agent.security.Actor;
 import com.dedeepya.agent.tools.*;
 import java.nio.charset.StandardCharsets;
@@ -90,7 +96,7 @@ public class RunStore {
           RunState state = new RunState();
           state.transcript = Jsons.transcript(session.transcript());
           state.model =
-              request.mode() == Mode.ORDER_STATUS ? config.economyModel() : config.model();
+              request.mode() == RunMode.ORDER_STATUS ? config.economyModel() : config.model();
           state.orderId = request.orderId();
           context.addUser(state, request);
           UUID id = UUID.randomUUID();
@@ -133,14 +139,14 @@ public class RunStore {
     return rows.get(0);
   }
 
-  public RunView view(Run run) {
-    Pending pending = null;
+  public RunResponse view(Run run) {
+    PendingApprovalResponse pending = null;
     if ("WAITING_APPROVAL".equals(run.status())) {
       var rows =
           jdbc.query(
               "SELECT * FROM approvals WHERE run_id=? AND status='PENDING'",
               (rs, n) ->
-                  new Pending(
+                  new PendingApprovalResponse(
                       rs.getString("call_id"),
                       rs.getString("tool"),
                       rs.getString("arguments"),
@@ -153,7 +159,7 @@ public class RunStore {
         jdbc.query(
             "SELECT * FROM service_credits WHERE tenant=? AND run_id=?",
             (rs, n) ->
-                new CreditReceipt(
+                new CreditReceiptResponse(
                     rs.getObject("id", UUID.class),
                     rs.getString("order_id"),
                     rs.getLong("amount_paise"),
@@ -161,13 +167,13 @@ public class RunStore {
                     rs.getTimestamp("created_at").toInstant()),
             run.tenant(),
             run.id());
-    return new RunView(
+    return new RunResponse(
         run.id(),
         run.sessionId(),
         run.status(),
         s.answer,
         pending,
-        new Usage(
+        new TokenUsageResponse(
             s.inputTokens,
             s.cachedInputTokens,
             s.outputTokens,
@@ -213,7 +219,7 @@ public class RunStore {
   }
 
   /** Approval and the local ledger effect commit atomically. The model cannot call this method. */
-  public Run decide(UUID id, Actor actor, Decision decision) {
+  public Run decide(UUID id, Actor actor, DecisionRequest decision) {
     if (!actor.approver())
       throw new ApiException(
           HttpStatus.FORBIDDEN, "APPROVER_REQUIRED", "Approver permission required");
@@ -230,11 +236,11 @@ public class RunStore {
           if (!"WAITING_APPROVAL".equals(run.status()) || !Instant.now().isBefore(run.deadline()))
             throw ApiException.conflict(
                 "APPROVAL_NOT_PENDING", "Approval is expired or has already been decided");
-          Pending pending =
+          PendingApprovalResponse pending =
               jdbc.queryForObject(
                   "SELECT * FROM approvals WHERE run_id=? AND status='PENDING' FOR UPDATE",
                   (rs, n) ->
-                      new Pending(
+                      new PendingApprovalResponse(
                           rs.getString("call_id"),
                           rs.getString("tool"),
                           rs.getString("arguments"),

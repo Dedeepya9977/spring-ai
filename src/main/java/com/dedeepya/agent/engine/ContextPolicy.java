@@ -1,8 +1,8 @@
 package com.dedeepya.agent.engine;
 
-import com.dedeepya.agent.api.ApiException;
-import com.dedeepya.agent.api.Contracts.RunRequest;
 import com.dedeepya.agent.config.AgentProperties;
+import com.dedeepya.agent.dto.request.RunRequest;
+import com.dedeepya.agent.exception.ApiException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import org.springframework.stereotype.Component;
@@ -21,7 +21,7 @@ public class ContextPolicy {
       requests human approval; it never means a credit was recorded.
       For missing information choose ASK_DETAILS. For unavailable facts choose ESCALATE.
       Acknowledge uncertainty. Include only exact evidence IDs returned by tools.
-      Answer in the supplied JSON schema. No markdown. No arbitrary shell, SQL or URLs.
+      AnswerResponse in the supplied JSON schema. No markdown. No arbitrary shell, SQL or URLs.
       """;
   private final AgentProperties config;
 

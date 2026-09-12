@@ -1,6 +1,6 @@
 package com.dedeepya.agent.engine;
 
-import com.dedeepya.agent.api.Contracts.Answer;
+import com.dedeepya.agent.dto.response.AnswerResponse;
 import java.time.Instant;
 import java.util.*;
 import java.util.function.Consumer;
@@ -19,10 +19,10 @@ public class StubModel implements ModelPort {
     String order = match.find() ? match.group() : state.orderId;
     if (order == null)
       return answer(
-          new Answer(
+          new AnswerResponse(
               "Please provide an order ID such as ORD-1001.",
               null,
-              Answer.Action.ASK_DETAILS,
+              AnswerResponse.Action.ASK_DETAILS,
               List.of()),
           delta);
     if (toolsEnabled && !state.evidence.contains("order:" + order) && state.steps == 1)
@@ -50,27 +50,27 @@ public class StubModel implements ModelPort {
                   "Synthetic delayed service request")));
     if (state.creditRecorded)
       return answer(
-          new Answer(
+          new AnswerResponse(
               "A service credit was recorded in the local ledger after human approval.",
               order,
-              Answer.Action.CREDIT_RECORDED,
+              AnswerResponse.Action.CREDIT_RECORDED,
               List.copyOf(state.evidence)),
           delta);
     if (!state.evidence.contains("order:" + order))
       return answer(
-          new Answer(
+          new AnswerResponse(
               "I could not find an accessible order. Please check the ID.",
               null,
-              Answer.Action.ESCALATE,
+              AnswerResponse.Action.ESCALATE,
               List.of()),
           delta);
     return answer(
-        new Answer(
+        new AnswerResponse(
             credit
                 ? "The request was reviewed; no new credit was recorded."
                 : "The requested order was found. See the referenced order record for its status.",
             order,
-            Answer.Action.ANSWER,
+            AnswerResponse.Action.ANSWER,
             List.copyOf(state.evidence)),
         delta);
   }
@@ -87,7 +87,7 @@ public class StubModel implements ModelPort {
         20);
   }
 
-  public static Result answer(Answer answer, Consumer<String> delta) {
+  public static Result answer(AnswerResponse answer, Consumer<String> delta) {
     String text = Jsons.write(answer);
     for (int i = 0; i < text.length(); i += 24)
       delta.accept(text.substring(i, Math.min(text.length(), i + 24)));

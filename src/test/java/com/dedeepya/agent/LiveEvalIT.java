@@ -2,10 +2,12 @@ package com.dedeepya.agent;
 
 import static org.assertj.core.api.Assertions.*;
 
-import com.dedeepya.agent.api.Contracts.*;
+import com.dedeepya.agent.dto.RunMode;
+import com.dedeepya.agent.dto.request.RunRequest;
 import com.dedeepya.agent.engine.*;
-import com.dedeepya.agent.persistence.RunStore;
+import com.dedeepya.agent.repository.RunStore;
 import com.dedeepya.agent.security.Actor;
+import com.dedeepya.agent.service.AgentService;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -49,7 +51,7 @@ class LiveEvalIT {
                           store.createSession(actor),
                           actor,
                           "eval-" + UUID.randomUUID(),
-                          new RunRequest(c.get("prompt").asText(), Mode.AGENT, null, null),
+                          new RunRequest(c.get("prompt").asText(), RunMode.AGENT, null, null),
                           e -> {},
                           new AtomicBoolean());
                   List<String> allowed = new ArrayList<>();
