@@ -8,7 +8,7 @@ import com.dedeepya.agent.domain.model.AssistantPrompt;
 import com.dedeepya.agent.domain.model.ConversationMessage;
 import com.dedeepya.agent.engine.ModelPort;
 import com.dedeepya.agent.engine.RunState;
-import java.time.Instant;
+import com.dedeepya.agent.engine.SpringAiModel;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
@@ -34,7 +34,7 @@ class SpringAiLanguageModelAdapterTest {
                     ConversationMessage.user("The order is ORD-1001."),
                     ConversationMessage.assistant("I will check that."))));
 
-    assertThat(reply.answer()).isEqualTo("done");
+    assertThat(reply.text()).isEqualTo("done");
     assertThat(captured.get().transcript)
         .containsExactly(
             java.util.Map.of("role", "system", "content", "Follow the support policy."),
