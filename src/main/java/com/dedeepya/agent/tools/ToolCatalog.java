@@ -1,8 +1,8 @@
 package com.dedeepya.agent.tools;
 
 import com.dedeepya.agent.engine.Jsons;
-import com.fasterxml.jackson.databind.JsonNode;
 import java.util.*;
+import tools.jackson.databind.JsonNode;
 
 public final class ToolCatalog {
   private ToolCatalog() {}
@@ -58,7 +58,7 @@ public final class ToolCatalog {
     @SuppressWarnings("unchecked")
     Set<String> allowed = ((Map<String, Object>) definition.schema().get("properties")).keySet();
     Set<String> supplied = new HashSet<>();
-    n.fieldNames().forEachRemaining(supplied::add);
+    n.propertyNames().forEach(supplied::add);
     if (!n.isObject() || !supplied.equals(allowed))
       throw new IllegalArgumentException("Provide exactly the required fields");
     if (allowed.contains("orderId")

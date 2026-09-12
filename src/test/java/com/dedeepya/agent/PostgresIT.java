@@ -15,16 +15,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.*;
-import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.*;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 
 @EnabledIfSystemProperty(named = "postgresIT", matches = "true")
 @Testcontainers
 @SpringBootTest
 @ActiveProfiles("test")
 class PostgresIT {
-  @Container
-  static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:17-alpine");
+  @Container static PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:17-alpine");
 
   @DynamicPropertySource
   static void database(DynamicPropertyRegistry r) {
