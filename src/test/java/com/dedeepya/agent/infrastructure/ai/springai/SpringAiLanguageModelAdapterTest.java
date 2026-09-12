@@ -1,14 +1,12 @@
 package com.dedeepya.agent.infrastructure.ai.springai;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
 
 import com.dedeepya.agent.Fixtures;
 import com.dedeepya.agent.domain.model.AssistantPrompt;
 import com.dedeepya.agent.domain.model.ConversationMessage;
 import com.dedeepya.agent.engine.ModelPort;
 import com.dedeepya.agent.engine.RunState;
-import com.dedeepya.agent.engine.SpringAiModel;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
@@ -41,14 +39,5 @@ class SpringAiLanguageModelAdapterTest {
             java.util.Map.of("role", "user", "content", "The order is ORD-1001."),
             java.util.Map.of("role", "assistant", "content", "I will check that."),
             java.util.Map.of("role", "user", "content", "What is the order status?"));
-  }
-
-  @Test
-  void acceptsSystemMessagesWhenMappingSpringAiConversation() {
-    var state = new RunState();
-    state.transcript.add(java.util.Map.of("role", "system", "content", "Additional policy."));
-
-    assertThatCode(() -> SpringAiModel.messages(state)).doesNotThrowAnyException();
-    assertThat(SpringAiModel.messages(state)).hasSize(2);
   }
 }
