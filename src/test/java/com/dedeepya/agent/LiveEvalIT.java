@@ -2,12 +2,12 @@ package com.dedeepya.agent;
 
 import static org.assertj.core.api.Assertions.*;
 
+import com.dedeepya.agent.application.service.AgentService;
 import com.dedeepya.agent.dto.RunMode;
 import com.dedeepya.agent.dto.request.RunRequest;
 import com.dedeepya.agent.engine.*;
-import com.dedeepya.agent.repository.RunStore;
+import com.dedeepya.agent.infrastructure.persistence.RunStore;
 import com.dedeepya.agent.security.Actor;
-import com.dedeepya.agent.service.AgentService;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;

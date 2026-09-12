@@ -1,6 +1,11 @@
-package com.dedeepya.agent.engine;
+package com.dedeepya.agent.infrastructure.openai;
 
 import com.dedeepya.agent.config.AgentProperties;
+import com.dedeepya.agent.domain.model.RunState;
+import com.dedeepya.agent.domain.port.ModelPort;
+import com.dedeepya.agent.engine.BudgetPolicy;
+import com.dedeepya.agent.engine.ContextPolicy;
+import com.dedeepya.agent.engine.OutputPolicy;
 import com.dedeepya.agent.exception.ApiException;
 import com.dedeepya.agent.tools.ToolCatalog;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -73,7 +78,7 @@ public class OpenAiModel implements ModelPort {
     throw new IllegalStateException("Unreachable retry state");
   }
 
-  ResponseCreateParams parameters(RunState state, boolean toolsEnabled) {
+  public ResponseCreateParams parameters(RunState state, boolean toolsEnabled) {
     var mapper = ObjectMappers.jsonMapper();
     List<ResponseInputItem> input = mapper.convertValue(state.transcript, new TypeReference<>() {});
     var schema =

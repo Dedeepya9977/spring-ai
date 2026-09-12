@@ -7,8 +7,8 @@ MCP is a protocol for applications to discover and use external tools and contex
 | Role | Code | Job |
 | --- | --- | --- |
 | Host | Spring Boot application, `AgentServiceImpl`, `ToolExecutor` | Talks to the model and enforces identity, budgets, tool validation, and approvals |
-| MCP client | `mcp/McpPolicyGateway.java` | Starts the server, initializes the connection, discovers its tool, calls it, and reads its resource |
-| MCP server | `mcp/PolicyServer.java` | Advertises and serves the fixed policy through the MCP Java SDK |
+| MCP client | `infrastructure/mcp/McpPolicyGateway.java` | Starts the server, initializes the connection, discovers its tool, calls it, and reads its resource |
+| MCP server | `infrastructure/mcp/PolicyServer.java` | Advertises and serves the fixed policy through the MCP Java SDK |
 
 The host contains the client. The server runs in a **separate operating-system process**. They use the same packaged JAR in two different execution modes.
 

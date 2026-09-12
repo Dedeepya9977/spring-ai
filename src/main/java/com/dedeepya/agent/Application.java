@@ -1,6 +1,6 @@
 package com.dedeepya.agent;
 
-import com.dedeepya.agent.mcp.PolicyServer;
+import com.dedeepya.agent.infrastructure.mcp.PolicyServer;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;

@@ -1,5 +1,6 @@
-package com.dedeepya.agent.engine;
+package com.dedeepya.agent.domain.port;
 
+import com.dedeepya.agent.domain.model.RunState;
 import java.time.Instant;
 import java.util.*;
 import java.util.function.Consumer;

@@ -110,17 +110,22 @@ Implementation references: [OpenAI function calling](https://developers.openai.c
 | `dto.request` | Typed API inputs with Jakarta Bean Validation | `RunRequest`, `DecisionRequest` |
 | `dto.response` | Typed API outputs with stable JSON field names | `RunResponse`, `SessionResponse`, `AnswerResponse` |
 | `dto` | Shared API enum | `RunMode` |
-| `service` | Application use-case interfaces | `AgentService`, `SessionService` |
-| `service.impl` | Workflow execution and session lifecycle implementations | `AgentServiceImpl`, `SessionServiceImpl` |
-| `service.event` | Internal event envelope used by the streaming adapter | `AgentEvent` |
-| `repository` | JDBC persistence and atomic state transitions | `RunStore` |
+| `application/usecase` | Narrow application entry points used by adapters | `RunAgentUseCase`, `RunDecisionUseCase`, `SessionUseCase` |
+| `application/service` | Application service interfaces that group related use cases | `AgentService`, `SessionService` |
+| `application/service/impl` | Workflow execution and session lifecycle implementations | `AgentServiceImpl`, `SessionServiceImpl` |
+| `application/service/event` | Internal event envelope used by the streaming adapter | `AgentEvent` |
+| `domain/model` | Provider-independent business state and accepted answer | `RunState`, `Answer` |
+| `domain/port` | Interfaces required by the application core | `ModelPort`, `PolicyGateway` |
+| `infrastructure/persistence` | JDBC persistence and atomic state transitions | `RunStore` |
 | `exception` | Application failures and centralized HTTP problem responses | `ApiException`, `GlobalExceptionHandler` |
-| `engine` | Model adapters, context, budgets, structured-output policies | `SpringAiModel`, `ModelPort`, `OutputPolicy` |
+| `engine` | Context, budgets, JSON and structured-output policies | `ContextPolicy`, `BudgetPolicy`, `OutputPolicy` |
+| `infrastructure/openai` | OpenAI and Spring AI provider adapters | `SpringAiModel`, `OpenAiModel`, `StubModel` |
+| `infrastructure/mcp` | MCP client and server adapters | `McpPolicyGateway`, `PolicyServer` |
 
-Controllers use constructor-injected service interfaces and never access `RunStore` directly. `POST /api/sessions` routes through `SessionController` → `SessionService` → `SessionServiceImpl` → `RunStore`, returning `SessionResponse`. Run, get, decision, and cancellation requests go through `AgentService` and `AgentServiceImpl`. SSE lifecycle and servlet details stay in the controller; the service emits transport-independent `AgentEvent` objects.
+Controllers use constructor-injected use-case interfaces and never access `RunStore` directly. `POST /api/sessions` routes through `SessionController` → `SessionUseCase` → `SessionServiceImpl` → `RunStore`, returning `SessionResponse`. Run, get, decision, and cancellation requests go through their narrow `Run*UseCase` interfaces into `AgentServiceImpl`. The broader `AgentService` interface groups those use cases for tests and other application adapters. SSE lifecycle and servlet details stay in the controller; the service emits transport-independent `AgentEvent` objects.
 
 Each request and response is a separate Java record. Their names and packages changed, but endpoint URLs, JSON property names, enum values, validation constraints, and status codes are preserved. The prior nested `Contracts` container is removed. These source-level class moves require updating imports for Java consumers.
 
 JDBC transactions remain scoped to atomic persistence operations in `RunStore`; the whole model execution loop is not wrapped in a database transaction. This avoids holding locks while waiting for external model calls or human approval. DTO projection assembly remains in the JDBC store for this application; there is no JPA entity layer.
 
-Interfaces provide an explicit service boundary here. This package organization is a project convention, not a requirement imposed by Spring MVC.
+Interfaces provide explicit use-case and service boundaries here. `domain.port` keeps the application independent of provider and policy implementations. This package organization is a project convention, not a requirement imposed by Spring MVC.

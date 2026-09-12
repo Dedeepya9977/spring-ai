@@ -1,8 +1,11 @@
 package com.dedeepya.agent.config;
 
-import com.dedeepya.agent.engine.*;
-import com.dedeepya.agent.mcp.McpPolicyGateway;
-import com.dedeepya.agent.tools.PolicyGateway;
+import com.dedeepya.agent.domain.port.ModelPort;
+import com.dedeepya.agent.domain.port.PolicyGateway;
+import com.dedeepya.agent.infrastructure.mcp.McpPolicyGateway;
+import com.dedeepya.agent.infrastructure.openai.OpenAiModel;
+import com.dedeepya.agent.infrastructure.openai.SpringAiModel;
+import com.dedeepya.agent.infrastructure.openai.StubModel;
 import com.openai.client.OpenAIClient;
 import com.openai.client.okhttp.OpenAIOkHttpClient;
 import io.micrometer.observation.ObservationRegistry;

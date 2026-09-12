@@ -1,7 +1,9 @@
-package com.dedeepya.agent.mcp;
+package com.dedeepya.agent.infrastructure.mcp;
 
+import com.dedeepya.agent.domain.port.PolicyGateway;
 import com.dedeepya.agent.engine.Jsons;
-import com.dedeepya.agent.tools.*;
+import com.dedeepya.agent.tools.ToolCatalog;
+import com.dedeepya.agent.tools.ToolExecutor;
 import io.modelcontextprotocol.json.McpJsonDefaults;
 import io.modelcontextprotocol.server.*;
 import io.modelcontextprotocol.server.transport.StdioServerTransportProvider;

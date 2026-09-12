@@ -55,7 +55,7 @@ On Linux/WSL use `./mvnw verify`.
 
 **Learn:** A test double returns predictable responses so you can study the application without an external model.
 
-**Read:** `engine/StubModel.java`, `application-local.yml`.
+**Read:** `infrastructure/openai/StubModel.java`, `application-local.yml`.
 
 **Do:** Start the app:
 
@@ -93,7 +93,7 @@ Supply an `Idempotency-Key`, for example `lesson-three-001`.
 
 **Learn:** A prompt is the input sent to a model. Tokens are pieces used to represent input/output; they are not exactly words. A context window limits how much information can fit into one model interaction. Generating a response does not update the model's trained weights.
 
-**Read:** `engine/ModelPort.java`, `ContextPolicy.SYSTEM`, `BudgetPolicy.java`.
+**Read:** `domain/port/ModelPort.java`, `ContextPolicy.SYSTEM`, `BudgetPolicy.java`.
 
 **Exercise:** On paper, list the input for one call: application instructions, recent conversation, tool schemas, tool results, and optional image. Label which parts are trusted policy and which are untrusted data.
 
@@ -103,7 +103,7 @@ Supply an `Idempotency-Key`, for example `lesson-three-001`.
 
 **Learn:** The SDK handles provider HTTP details. Your code still decides what to send, how much to spend, and what to do with the response.
 
-**Read:** `config/RuntimeConfiguration.java`, `engine/OpenAiModel.java`, especially `parameters()`.
+**Read:** `config/RuntimeConfiguration.java`, `infrastructure/openai/OpenAiModel.java`, especially `parameters()`.
 
 **Do:** Follow “Switch to the real OpenAI model” in the README. Set the key only in your environment. Start with one order-status question, not a long agent run.
 
@@ -227,7 +227,7 @@ Use `$body` for a run request with a new key. The image must be at most 256 KB; 
 
 **Learn:** MCP is a protocol for connecting an AI application to tools and context. A client discovers capabilities from a server. An MCP server is not an LLM.
 
-**Read:** `mcp/PolicyServer.java`, `mcp/McpPolicyGateway.java`.
+**Read:** `infrastructure/mcp/PolicyServer.java`, `infrastructure/mcp/McpPolicyGateway.java`.
 
 **Do:** Follow “Turn on MCP” in the README. Compare the embedded policy path with the MCP path. Run `McpProcessIT` through `verify`.
 
@@ -313,7 +313,7 @@ Use `$body` for a run request with a new key. The image must be at most 256 KB; 
 
 **Read:** `docs/SPRING_AI_BRIDGE.md`, especially the concept mapping and first `ChatClient` exercise.
 
-**Exercise:** Open `engine/SpringAiModel.java` and its wire tests. Trace `chatClient.prompt(...).stream().chatResponse()`. Explain the system/user/tool messages, strict schema, usage counters, and why tool auto-execution is disabled. Compare with `OpenAiModel.parameters()`.
+**Exercise:** Open `infrastructure/openai/SpringAiModel.java` and its wire tests. Trace `chatClient.prompt(...).stream().chatResponse()`. Explain the system/user/tool messages, strict schema, usage counters, and why tool auto-execution is disabled. Compare with `OpenAiModel.parameters()`.
 
 **Done when:** You can explain the difference between `OpenAIClient` and Spring AI `ChatClient` and trace how this project's default Spring AI adapter reaches the official OpenAI SDK.
 
@@ -361,8 +361,8 @@ For your first session, do only sessions 1 and 2. Get the app running, request o
 ## Reading the MVC flow after the package refactor
 
 1. Open `controller/SessionController.java` and find `create()`.
-2. Follow its `SessionService` interface into `service/impl/SessionServiceImpl.java`.
-3. Follow the call to `repository/RunStore.java` to see the database insert.
+2. Follow its `SessionUseCase` interface into `application/service/impl/SessionServiceImpl.java`.
+3. Follow the call to `infrastructure/persistence/RunStore.java` to see the database insert.
 4. Inspect `dto/response/SessionResponse.java`: its `id` becomes the HTTP JSON response.
 5. Open `controller/AgentController.java`; follow a `RunRequest` into `AgentService` and `AgentServiceImpl`.
 6. Compare `dto/request` validation annotations with the response records in `dto/response`.

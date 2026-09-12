@@ -3,6 +3,7 @@ package com.dedeepya.agent.engine;
 import static org.assertj.core.api.Assertions.*;
 
 import com.dedeepya.agent.Fixtures;
+import com.dedeepya.agent.domain.model.RunState;
 import com.dedeepya.agent.dto.RunMode;
 import com.dedeepya.agent.dto.request.RunRequest;
 import com.dedeepya.agent.dto.response.AnswerResponse;

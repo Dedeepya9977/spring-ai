@@ -1,6 +1,7 @@
 package com.dedeepya.agent.engine;
 
 import com.dedeepya.agent.config.AgentProperties;
+import com.dedeepya.agent.domain.model.RunState;
 import com.dedeepya.agent.dto.request.RunRequest;
 import com.dedeepya.agent.exception.ApiException;
 import java.nio.charset.StandardCharsets;

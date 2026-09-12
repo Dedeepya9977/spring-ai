@@ -1,6 +1,12 @@
-package com.dedeepya.agent.engine;
+package com.dedeepya.agent.infrastructure.openai;
 
 import com.dedeepya.agent.config.AgentProperties;
+import com.dedeepya.agent.domain.model.RunState;
+import com.dedeepya.agent.domain.port.ModelPort;
+import com.dedeepya.agent.engine.BudgetPolicy;
+import com.dedeepya.agent.engine.ContextPolicy;
+import com.dedeepya.agent.engine.Jsons;
+import com.dedeepya.agent.engine.OutputPolicy;
 import com.dedeepya.agent.exception.ApiException;
 import com.dedeepya.agent.tools.ToolCatalog;
 import java.time.Duration;
@@ -110,7 +116,7 @@ public final class SpringAiModel implements ModelPort {
   }
 
   @SuppressWarnings("unchecked")
-  static List<Message> messages(RunState state) {
+  public static List<Message> messages(RunState state) {
     List<Message> messages = new ArrayList<>();
     Map<String, String> toolNames = new HashMap<>();
     messages.add(new SystemMessage(ContextPolicy.SYSTEM));
@@ -166,8 +172,7 @@ public final class SpringAiModel implements ModelPort {
             }
           }
         }
-        if ("system".equals(role)) messages.add(new SystemMessage(text.toString()));
-        else if ("user".equals(role))
+        if ("user".equals(role))
           messages.add(UserMessage.builder().text(text.toString()).media(media).build());
         else if ("assistant".equals(role)) messages.add(new AssistantMessage(text.toString()));
         else throw ApiException.bad("CONTEXT_FORMAT", "Unexpected conversation role");

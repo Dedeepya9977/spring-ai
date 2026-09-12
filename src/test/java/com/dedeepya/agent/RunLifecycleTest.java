@@ -2,7 +2,10 @@ package com.dedeepya.agent;
 
 import static org.assertj.core.api.Assertions.*;
 
+import com.dedeepya.agent.application.service.AgentService;
+import com.dedeepya.agent.application.service.impl.AgentServiceImpl;
 import com.dedeepya.agent.config.AgentProperties;
+import com.dedeepya.agent.domain.port.ModelPort;
 import com.dedeepya.agent.dto.RunMode;
 import com.dedeepya.agent.dto.request.DecisionRequest;
 import com.dedeepya.agent.dto.request.RunRequest;
@@ -10,10 +13,9 @@ import com.dedeepya.agent.dto.response.AnswerResponse;
 import com.dedeepya.agent.dto.response.RunResponse;
 import com.dedeepya.agent.engine.*;
 import com.dedeepya.agent.exception.*;
-import com.dedeepya.agent.repository.RunStore;
+import com.dedeepya.agent.infrastructure.openai.StubModel;
+import com.dedeepya.agent.infrastructure.persistence.RunStore;
 import com.dedeepya.agent.security.Actor;
-import com.dedeepya.agent.service.AgentService;
-import com.dedeepya.agent.service.impl.AgentServiceImpl;
 import com.dedeepya.agent.tools.*;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.util.*;

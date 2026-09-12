@@ -3,7 +3,10 @@ package com.dedeepya.agent.engine;
 import static org.assertj.core.api.Assertions.*;
 
 import com.dedeepya.agent.Fixtures;
+import com.dedeepya.agent.domain.model.RunState;
+import com.dedeepya.agent.domain.port.ModelPort;
 import com.dedeepya.agent.exception.ApiException;
+import com.dedeepya.agent.infrastructure.openai.SpringAiModel;
 import com.openai.client.OpenAIClient;
 import com.openai.client.okhttp.OpenAIOkHttpClient;
 import java.time.Instant;

@@ -1,13 +1,16 @@
 package com.dedeepya.agent.controller;
 
+import com.dedeepya.agent.application.service.event.AgentEvent;
+import com.dedeepya.agent.application.usecase.RunAgentUseCase;
+import com.dedeepya.agent.application.usecase.RunCancellationUseCase;
+import com.dedeepya.agent.application.usecase.RunDecisionUseCase;
+import com.dedeepya.agent.application.usecase.RunQueryUseCase;
 import com.dedeepya.agent.config.AgentProperties;
 import com.dedeepya.agent.dto.request.DecisionRequest;
 import com.dedeepya.agent.dto.request.RunRequest;
 import com.dedeepya.agent.dto.response.RunResponse;
 import com.dedeepya.agent.exception.ApiException;
 import com.dedeepya.agent.security.Actor;
-import com.dedeepya.agent.service.AgentService;
-import com.dedeepya.agent.service.event.AgentEvent;
 import jakarta.validation.Valid;
 import java.io.IOException;
 import java.util.*;
@@ -21,13 +24,24 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 @RestController
 @RequestMapping("/api")
 public class AgentController {
-  private final AgentService service;
+  private final RunAgentUseCase runAgent;
+  private final RunQueryUseCase runQuery;
+  private final RunDecisionUseCase runDecision;
+  private final RunCancellationUseCase runCancellation;
   private final ExecutorService streamExecutor;
   private final AgentProperties config;
 
   public AgentController(
-      AgentService service, ExecutorService streamExecutor, AgentProperties config) {
-    this.service = service;
+      RunAgentUseCase runAgent,
+      RunQueryUseCase runQuery,
+      RunDecisionUseCase runDecision,
+      RunCancellationUseCase runCancellation,
+      ExecutorService streamExecutor,
+      AgentProperties config) {
+    this.runAgent = runAgent;
+    this.runQuery = runQuery;
+    this.runDecision = runDecision;
+    this.runCancellation = runCancellation;
     this.streamExecutor = streamExecutor;
     this.config = config;
   }
@@ -38,7 +52,7 @@ public class AgentController {
       @RequestHeader("Idempotency-Key") String key,
       @Valid @RequestBody RunRequest request,
       Authentication auth) {
-    return service.run(
+    return runAgent.run(
         sessionId, Actor.from(auth), key, request, event -> {}, new AtomicBoolean(false));
   }
 
@@ -61,7 +75,7 @@ public class AgentController {
           () -> {
             try {
               RunResponse result =
-                  service.run(
+                  runAgent.run(
                       sessionId, actor, key, request, event -> send(emitter, event), cancelled);
               send(emitter, new AgentEvent("final", result));
               emitter.complete();
@@ -86,19 +100,19 @@ public class AgentController {
 
   @GetMapping("/runs/{id}")
   public RunResponse get(@PathVariable UUID id, Authentication auth) {
-    return service.get(id, Actor.from(auth));
+    return runQuery.get(id, Actor.from(auth));
   }
 
   @PostMapping("/runs/{id}/decision")
   public RunResponse decide(
       @PathVariable UUID id, @Valid @RequestBody DecisionRequest decision, Authentication auth) {
-    return service.decide(id, Actor.from(auth), decision);
+    return runDecision.decide(id, Actor.from(auth), decision);
   }
 
   @PostMapping("/runs/{id}/cancel")
   @ResponseStatus(HttpStatus.NO_CONTENT)
   public void cancel(@PathVariable UUID id, Authentication auth) {
-    service.cancel(id, Actor.from(auth));
+    runCancellation.cancel(id, Actor.from(auth));
   }
 
   private static void send(SseEmitter emitter, AgentEvent event) {

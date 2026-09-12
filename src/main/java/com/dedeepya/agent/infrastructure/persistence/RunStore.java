@@ -1,14 +1,19 @@
-package com.dedeepya.agent.repository;
+package com.dedeepya.agent.infrastructure.persistence;
 
 import com.dedeepya.agent.config.AgentProperties;
+import com.dedeepya.agent.domain.model.RunState;
+import com.dedeepya.agent.domain.port.ModelPort;
 import com.dedeepya.agent.dto.RunMode;
 import com.dedeepya.agent.dto.request.DecisionRequest;
 import com.dedeepya.agent.dto.request.RunRequest;
+import com.dedeepya.agent.dto.response.AnswerResponse;
 import com.dedeepya.agent.dto.response.CreditReceiptResponse;
 import com.dedeepya.agent.dto.response.PendingApprovalResponse;
 import com.dedeepya.agent.dto.response.RunResponse;
 import com.dedeepya.agent.dto.response.TokenUsageResponse;
-import com.dedeepya.agent.engine.*;
+import com.dedeepya.agent.engine.BudgetPolicy;
+import com.dedeepya.agent.engine.ContextPolicy;
+import com.dedeepya.agent.engine.Jsons;
 import com.dedeepya.agent.exception.*;
 import com.dedeepya.agent.security.Actor;
 import com.dedeepya.agent.tools.*;
@@ -167,11 +172,19 @@ public class RunStore {
                     rs.getTimestamp("created_at").toInstant()),
             run.tenant(),
             run.id());
+    AnswerResponse answer =
+        s.answer == null
+            ? null
+            : new AnswerResponse(
+                s.answer.summary(),
+                s.answer.orderId(),
+                AnswerResponse.Action.valueOf(s.answer.recommendedAction().name()),
+                s.answer.evidence());
     return new RunResponse(
         run.id(),
         run.sessionId(),
         run.status(),
-        s.answer,
+        answer,
         pending,
         new TokenUsageResponse(
             s.inputTokens,

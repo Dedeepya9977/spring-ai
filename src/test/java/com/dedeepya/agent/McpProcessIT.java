@@ -3,7 +3,7 @@ package com.dedeepya.agent;
 import static org.assertj.core.api.Assertions.*;
 
 import com.dedeepya.agent.config.AgentProperties;
-import com.dedeepya.agent.mcp.McpPolicyGateway;
+import com.dedeepya.agent.infrastructure.mcp.McpPolicyGateway;
 import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 

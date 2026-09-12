@@ -1,9 +1,9 @@
-package com.dedeepya.agent.service.impl;
+package com.dedeepya.agent.application.service.impl;
 
+import com.dedeepya.agent.application.service.SessionService;
 import com.dedeepya.agent.dto.response.SessionResponse;
-import com.dedeepya.agent.repository.RunStore;
+import com.dedeepya.agent.infrastructure.persistence.RunStore;
 import com.dedeepya.agent.security.Actor;
-import com.dedeepya.agent.service.SessionService;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 
