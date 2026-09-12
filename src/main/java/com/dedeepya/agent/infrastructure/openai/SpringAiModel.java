@@ -175,6 +175,7 @@ public final class SpringAiModel implements ModelPort {
         if ("user".equals(role))
           messages.add(UserMessage.builder().text(text.toString()).media(media).build());
         else if ("assistant".equals(role)) messages.add(new AssistantMessage(text.toString()));
+        else if ("system".equals(role)) messages.add(new SystemMessage(text.toString()));
         else throw ApiException.bad("CONTEXT_FORMAT", "Unexpected conversation role");
       } else {
         // Responses-only reasoning items cannot be safely translated to Chat Completions.

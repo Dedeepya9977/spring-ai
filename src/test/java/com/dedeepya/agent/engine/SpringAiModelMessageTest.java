@@ -3,6 +3,8 @@ package com.dedeepya.agent.engine;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
+import com.dedeepya.agent.domain.model.RunState;
+import com.dedeepya.agent.infrastructure.openai.SpringAiModel;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 
