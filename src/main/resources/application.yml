@@ -31,7 +31,7 @@ security:
   issuer: ${OIDC_ISSUER}
   audience: ${OIDC_AUDIENCE:agent-foundations}
 agent:
-  provider: ${AI_PROVIDER:OPENAI}
+  provider: ${AI_PROVIDER:SPRING_AI}
   model: ${OPENAI_MODEL:gpt-4.1-mini}
   economy-model: ${OPENAI_ECONOMY_MODEL:gpt-4.1-mini}
   max-steps: 6

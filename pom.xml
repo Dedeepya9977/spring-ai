@@ -11,12 +11,24 @@
   <artifactId>agent-foundations</artifactId>
   <version>1.0.0</version>
   <name>Agent Foundations — Automotive Support</name>
-  <description>OpenAI Responses SDK, durable agent controls, MCP and approval-gated workflows.</description>
+  <description>Spring AI, OpenAI Java SDK, durable agent controls, MCP and approval-gated workflows.</description>
   <properties>
     <java.version>17</java.version>
+    <spring-ai.version>2.0.1</spring-ai.version>
     <openai.version>4.61.0</openai.version>
     <mcp.version>2.0.1</mcp.version>
   </properties>
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.springframework.ai</groupId>
+        <artifactId>spring-ai-bom</artifactId>
+        <version>${spring-ai.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
   <dependencies>
     <dependency>
       <groupId>org.springframework.boot</groupId>
@@ -59,6 +71,15 @@
       <groupId>com.h2database</groupId>
       <artifactId>h2</artifactId>
       <scope>runtime</scope>
+    </dependency>
+    <!-- Explicit modules keep provider selection and retry limits application-owned. -->
+    <dependency>
+      <groupId>org.springframework.ai</groupId>
+      <artifactId>spring-ai-openai</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.ai</groupId>
+      <artifactId>spring-ai-client-chat</artifactId>
     </dependency>
     <dependency>
       <groupId>com.openai</groupId>

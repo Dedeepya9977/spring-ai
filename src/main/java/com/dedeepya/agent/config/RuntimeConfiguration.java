@@ -5,8 +5,12 @@ import com.dedeepya.agent.mcp.McpPolicyGateway;
 import com.dedeepya.agent.tools.PolicyGateway;
 import com.openai.client.OpenAIClient;
 import com.openai.client.okhttp.OpenAIOkHttpClient;
+import io.micrometer.observation.ObservationRegistry;
 import java.util.*;
 import java.util.concurrent.*;
+import org.springframework.ai.openai.OpenAiChatModel;
+import org.springframework.ai.openai.OpenAiChatOptions;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.*;
 import org.springframework.core.env.Environment;
@@ -23,7 +27,7 @@ public class RuntimeConfiguration {
   }
 
   @Bean(destroyMethod = "close")
-  @ConditionalOnProperty(name = "agent.provider", havingValue = "OPENAI", matchIfMissing = true)
+  @ConditionalOnExpression("'${agent.provider:SPRING_AI}' != 'STUB'")
   OpenAIClient openAIClient(AgentProperties config) {
     String key = System.getenv("OPENAI_API_KEY");
     if (key == null || key.isBlank())
@@ -37,9 +41,29 @@ public class RuntimeConfiguration {
   }
 
   @Bean
-  @ConditionalOnProperty(name = "agent.provider", havingValue = "OPENAI", matchIfMissing = true)
+  @ConditionalOnProperty(name = "agent.provider", havingValue = "OPENAI")
   ModelPort realModel(OpenAIClient client, AgentProperties config) {
     return new OpenAiModel(client, config);
+  }
+
+  @Bean
+  @ConditionalOnProperty(name = "agent.provider", havingValue = "SPRING_AI", matchIfMissing = true)
+  ModelPort springAiModel(
+      OpenAIClient client, AgentProperties config, ObservationRegistry observations) {
+    var model =
+        OpenAiChatModel.builder()
+            .openAiClient(client)
+            .openAiClientAsync(client.async())
+            .options(
+                OpenAiChatOptions.builder()
+                    .model(config.model())
+                    .timeout(config.providerTimeout())
+                    .maxRetries(0)
+                    .store(false)
+                    .build())
+            .observationRegistry(observations)
+            .build();
+    return new SpringAiModel(model, config);
   }
 
   @Bean

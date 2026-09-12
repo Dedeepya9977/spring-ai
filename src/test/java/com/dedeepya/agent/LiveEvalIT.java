@@ -21,7 +21,7 @@ import org.springframework.test.context.ActiveProfiles;
 @EnabledIfEnvironmentVariable(named = "OPENAI_LIVE_EVALS", matches = "true")
 @SpringBootTest(
     properties = {
-      "agent.provider=OPENAI",
+      "agent.provider=${LIVE_EVAL_PROVIDER:SPRING_AI}",
       "spring.datasource.url=jdbc:h2:mem:live-eval;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE"
     })
 @ActiveProfiles("test")

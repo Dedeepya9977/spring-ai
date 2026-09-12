@@ -27,6 +27,7 @@ public record AgentProperties(
     @NotNull Duration retention,
     @NotNull Mcp mcp) {
   public enum Provider {
+    SPRING_AI,
     OPENAI,
     STUB
   }
