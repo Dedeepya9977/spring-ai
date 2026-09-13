@@ -13,6 +13,8 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.function.Consumer;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Metrics;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.ChatClientAttributes;
 import org.springframework.ai.chat.messages.*;
@@ -33,9 +35,15 @@ public final class SpringAiModel implements ModelPort {
   private final AgentProperties config;
 
   public SpringAiModel(ChatModel chatModel, AgentProperties config) {
+    this(chatModel, config, Metrics.globalRegistry);
+  }
+
+  public SpringAiModel(
+      ChatModel chatModel, AgentProperties config, MeterRegistry meterRegistry) {
     this.config = config;
     this.chatClient =
         ChatClient.builder(chatModel)
+            .defaultAdvisors(new ModelTimingAdvisor(meterRegistry))
             // Spring AI 2 auto-registers a tool-execution advisor unless explicitly disabled.
             // Returning a proposal to AgentService is essential for durable human approval.
             .defaultAdvisors(

@@ -55,19 +55,22 @@ Memory policies choose what to send to the model. They are not necessarily a com
 
 **Success condition:** Your tests show that one tenant's history cannot enter another tenant's prompt, and you can explain the difference between stored history and selected model context.
 
-## Lab C — A read-only `@Tool` and advisors
+## Lab C — Read-only tools and a safe advisor
 
-**Goal:** Understand how Spring AI exposes Java functions.
+**Goal:** Understand Spring AI function exposure and advisor lifecycle without giving the model an application write path.
 
-1. Expose the fixed `PolicyGateway.policy()` data as a read-only tool. Give it one clear description.
-2. Observe the schema generated for its method parameters and compare it with `ToolCatalog`.
-3. Add a deliberately confusing second tool in a learning branch, then evaluate whether routing quality degrades.
-4. Inspect the configured tool-execution lifecycle and how identity/context is passed to the callback.
-5. Add a simple advisor that records a safe timing metric; keep prompt contents and keys out of logs.
+This chunk implements:
 
-Spring AI offers tool declarations/callbacks, but permissions and action validation remain application decisions. Never annotate `RunStore.decide` as an automatically callable write tool; it requires an authenticated human decision. [Spring AI tool calling](https://docs.spring.io/spring-ai/reference/api/tools.html).
+1. infrastructure/openai/PolicyTools, a @Tool named search_policy backed by the domain PolicyGateway.
+2. infrastructure/openai/ModelTimingAdvisor, a call/stream advisor that records only elapsed time in assistant.model.latency.
+3. A constructor-level ChatClient configuration that disables automatic tool execution and installs the timing advisor.
 
-**Success condition:** You can show the model asking for the policy, Java executing the read, and the result returning to the model, while proving there is no automatic credit-write path.
+The tool returns fixed policy data only. It cannot create an approval, change an order, or grant permission. The existing AgentServiceImpl loop remains responsible for tool validation, authorization, persistence, and human approval. This separation is intentional: Spring AI can expose a Java method as a model-visible function, but application policy must decide whether and how a proposed call executes. [Spring AI tool calling](https://docs.spring.io/spring-ai/reference/api/tools.html) and [Spring AI advisors](https://docs.spring.io/spring-ai/reference/api/advisors.html).
+
+**Exercise:** Read the generated schema in PolicyToolsTest, compare it with ToolCatalog, and explain why ModelTimingAdvisor records duration in doFinally for streams. Confirm that no prompt or key appears in the advisor.
+
+**Success condition:** You can show the model-facing read-only contract while proving that the durable approval path still belongs to the application service.
+
 
 ## Lab D — RAG with PostgreSQL/pgvector
 

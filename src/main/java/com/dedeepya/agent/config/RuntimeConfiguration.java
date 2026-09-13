@@ -8,6 +8,7 @@ import com.dedeepya.agent.infrastructure.openai.SpringAiModel;
 import com.dedeepya.agent.infrastructure.openai.StubModel;
 import com.openai.client.OpenAIClient;
 import com.openai.client.okhttp.OpenAIOkHttpClient;
+import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.observation.ObservationRegistry;
 import java.util.*;
 import java.util.concurrent.*;
@@ -52,7 +53,10 @@ public class RuntimeConfiguration {
   @Bean
   @ConditionalOnProperty(name = "agent.provider", havingValue = "SPRING_AI", matchIfMissing = true)
   ModelPort springAiModel(
-      OpenAIClient client, AgentProperties config, ObservationRegistry observations) {
+      OpenAIClient client,
+      AgentProperties config,
+      ObservationRegistry observations,
+      MeterRegistry meterRegistry) {
     var model =
         OpenAiChatModel.builder()
             .openAiClient(client)
@@ -66,7 +70,7 @@ public class RuntimeConfiguration {
                     .build())
             .observationRegistry(observations)
             .build();
-    return new SpringAiModel(model, config);
+    return new SpringAiModel(model, config, meterRegistry);
   }
 
   @Bean
