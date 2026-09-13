@@ -4,27 +4,28 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.dedeepya.agent.domain.port.PolicyGateway;
+import java.lang.reflect.Method;
 import org.junit.jupiter.api.Test;
-import org.springframework.ai.tool.ToolCallback;
-import org.springframework.ai.tool.ToolCallbacks;
+import org.springframework.ai.tool.annotation.Tool;
 
 class PolicyToolsTest {
   @Test
-  void exposesReadOnlyPolicyToolWithAnExplicitSchema() {
+  void exposesReadOnlyPolicyToolWithAnExplicitContract() throws Exception {
     PolicyGateway gateway =
         topic -> {
           if (!"service_credit".equals(topic))
             throw new IllegalArgumentException("Unsupported policy");
           return PolicyGateway.policy();
         };
+    PolicyTools tools = new PolicyTools(gateway);
+    Method method = PolicyTools.class.getDeclaredMethod("searchPolicy", String.class);
+    Tool annotation = method.getAnnotation(Tool.class);
 
-    ToolCallback callback = ToolCallbacks.from(new PolicyTools(gateway))[0];
-
-    assertThat(callback.getToolDefinition().name()).isEqualTo("search_policy");
-    assertThat(callback.getToolDefinition().description()).contains("never changes data");
-    assertThat(callback.getToolDefinition().inputSchema()).contains("topic");
-    assertThat(callback.call("{\"topic\":\"service_credit\"}")).contains("service_credit");
-    assertThatThrownBy(() -> callback.call("{\"topic\":\"unknown\"}"))
+    assertThat(annotation).isNotNull();
+    assertThat(annotation.name()).isEqualTo("search_policy");
+    assertThat(annotation.description()).contains("never changes data");
+    assertThat(tools.searchPolicy("service_credit")).containsEntry("topic", "service_credit");
+    assertThatThrownBy(() -> tools.searchPolicy("unknown"))
         .isInstanceOf(IllegalArgumentException.class);
   }
 }
